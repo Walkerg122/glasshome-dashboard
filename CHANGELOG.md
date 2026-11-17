@@ -3,9 +3,9 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/) and
 versions follow [Semantic Versioning](https://semver.org/).
 
-## [2.0.0-beta.1] - unreleased (planned public beta)
+## [2.0.0-beta.1] - 2026-11-17 (public beta)
 
-The first public beta of Glass Home 2.0, to be tagged `v2.0.0-beta.1`. The date is added when it is published.
+The first public beta of Glass Home 2.0, tagged `v2.0.0-beta.1`.
 
 ### Highlights
 - **A guided first-time setup.** A welcome screen and an eight-step wizard set Glass Home up for your home
