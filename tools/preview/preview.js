@@ -264,6 +264,7 @@ listeners.add((h) => { haEl.hass = h; });
 await import("/local/glasshome/glasshome-cards.js");
 await import("/local/glasshome/glasshome-news.js");
 await import("/tools/preview/layout-check.js");
+await import("/tools/preview/responsive-check.js");
 
 const root = document.getElementById("view");
 let mounted = [];

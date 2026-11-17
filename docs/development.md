@@ -29,8 +29,21 @@ await ghLayoutCheck()   // every homepage page: cards off screen, scale, scrolli
 await ghSpillCheck()    // the current sections view: cards wider than the screen, content outside its card
 ```
 
-Run them at each screen size: 360×800, 390×844, 412×915, 600×960, 768×1024, 1024×768, 1280×800, 1440×900 and
-1920×1080, in portrait and landscape.
+`tools/preview/responsive-check.js` checks everything at once, from what is actually drawn:
+
+```js
+await ghAll()           // every view, homepage page and Settings tab: overflow, overlaps, cut-off text, small text
+                        // and touch targets, stretched camera pictures, controls stuck under a floating bar
+```
+
+Run them at each screen size: 320×568, 375×812, 390×844, 430×932, 600×960, 768×1024, 1024×768, 1280×800,
+1366×768, 1920×1080 and 2560×1440, in portrait and landscape. Browser zoom is the same as a smaller window
+(1280 px at 150% behaves like 853 px wide).
+
+These checks run in the preview's emulated window. Glass Home 2.0's responsive layout has been tested this way at
+all of the sizes above, but not yet on physical phones, tablets or wall displays, or on a separate Home Assistant
+installation: real notches and home bars, iOS Safari's address bar, touch, and Home Assistant's own header and
+sidebar are not covered. Reports from real devices are welcome.
 
 ## Tests for the setup model
 

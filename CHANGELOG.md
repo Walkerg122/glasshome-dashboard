@@ -70,6 +70,18 @@ to write YAML.
   same section after you save, and the chosen tab is scrolled into view.
 
 ### Fixed
+- **Every screen size, automatically** (tested in the preview from 320×568 phones to 2560×1440 monitors, in portrait
+  and landscape; not yet tested on physical devices or a separate Home Assistant installation):
+  - Chart and floor plan labels stay readable on phones (they shrank to 4–8 px); room sizes on the floor plan hide
+    when too small to read.
+  - The bottom bar no longer cuts off long page names: they end in "…", and on the narrowest phones the bar shows
+    icons only (each button keeps its name for screen readers). On short landscape screens the bar is shorter.
+  - Large monitors use a wider layout (1180 px from 1600×1000, 1400 px from 2200×1300) instead of a 900 px strip.
+  - Long camera, room and status names shorten with "…" instead of spilling out of their card.
+  - In demo mode on phones, the last buttons and tiles can scroll clear of the demo label.
+  - The Settings import is a proper button (it was a 21 px browser control), and the setup screens respect the
+    screen's safe areas (notches, home bar).
+- A responsive check for the preview (`tools/preview/responsive-check.js`, see docs/development.md).
 - The font was loaded from a path that did not exist in Glass Home.
 - The Finish summary lists features by name ("Cameras", "Floor plan") instead of their settings keys.
 - The Energy page's appliance note no longer names one household's plugs.

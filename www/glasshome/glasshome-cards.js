@@ -1393,7 +1393,7 @@ function ghDemoFlag() {
   if (!document.getElementById("glasshome-demo-flag-css")) {
     const css = document.createElement("style");
     css.id = "glasshome-demo-flag-css";
-    css.textContent = "@media (max-width:600px){#glasshome-demo-flag{top:auto!important;bottom:calc(92px + env(safe-area-inset-bottom,0px))!important}}";
+    css.textContent = "@media (max-width:599px){#glasshome-demo-flag{top:auto!important;bottom:calc(92px + env(safe-area-inset-bottom,0px))!important}}";
     document.head.append(css);
   }
   el.setAttribute("role", "note");
@@ -1783,8 +1783,8 @@ function archStructure(fid) {
 function archLabels(fid) {
   return ARCH[fid].rooms.map((r) => {
     const [x, y] = r.label;
-    return `<text x="${x}" y="${y}" font-size="${r.small ? 11 : 13}" font-weight="650" fill="#3b2f25" letter-spacing="0.3" paint-order="stroke" stroke="rgba(255,250,240,0.55)" stroke-width="3">${esc(r.name)}</text>`
-      + (r.dims ? `<text x="${x}" y="${y + 15}" font-size="10" font-weight="500" fill="#6b5a49" paint-order="stroke" stroke="rgba(255,250,240,0.55)" stroke-width="3">${esc(r.dims)}</text>` : "");
+    return `<text x="${x}" y="${y}" data-min="9" font-size="${r.small ? 11 : 13}" font-weight="650" fill="#3b2f25" letter-spacing="0.3" paint-order="stroke" stroke="rgba(255,250,240,0.55)" stroke-width="3">${esc(r.name)}</text>`
+      + (r.dims ? `<text class="gh-dims" x="${x}" y="${y + 15}" font-size="10" font-weight="500" fill="#6b5a49" paint-order="stroke" stroke="rgba(255,250,240,0.55)" stroke-width="3">${esc(r.dims)}</text>` : "");
   }).join("");
 }
 
@@ -3179,7 +3179,7 @@ class GlassHomeRoomCard extends HTMLElement {
         ha-card { display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; border-radius: 22px; background: ${GLASS_BG};
           border: ${on ? `1px solid rgba(${PURPLE},0.45)` : GLASS_BORDER}; box-shadow: ${on ? "0 0 20px rgba(139,92,246,0.22), " : ""}${GLASS_EDGE}; color: #fff; }
         ha-icon { --mdc-icon-size: 26px; color: ${on ? `rgb(${PURPLE})` : "#8e8aa0"}; }
-        .t { flex: 1; min-width: 0; } .n { font-size: 19px; font-weight: 700; } .s { font-size: 14px; color: #8e8aa0; }
+        .t { flex: 1; min-width: 0; } .n { font-size: 19px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .s { font-size: 14px; color: #8e8aa0; }
         button { min-width: 72px; height: 48px; border: 0; border-radius: 16px; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
         .on { background: linear-gradient(160deg, #a78bfa, #7c3aed); color: #fff; } .off { background: rgba(255,255,255,0.08); color: #fff; }
         ${c.stacked ? "ha-card { flex-wrap: wrap; padding: 14px; } .t { flex: 1 1 calc(100% - 40px); } button { flex: 1 1 0; min-width: 0; }" : ""}
@@ -3298,14 +3298,14 @@ class GlassHomePagerCard extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>
         :host { display: block; }
-        .root { position: relative; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+        .root { --gh-w: 900px; position: relative; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
           background: #120d22 ${(GH_CFG.appearance || {}).background === "plain" ? "" : `url("${GH_ASSETS}bg.svg")`} center / cover no-repeat; }
         .viewport { position: relative; flex: 1; min-height: 0; overflow: hidden; touch-action: pan-y; }
         .track { display: flex; height: 100%; width: 100%; transform: translate3d(0, 0, 0); will-change: transform; backface-visibility: hidden; }
         .track.anim { transition: transform 0.26s cubic-bezier(0.22, 0.9, 0.3, 1); }
         .page { flex: 0 0 100%; height: 100%; overflow: hidden; contain: layout paint; touch-action: pan-y; }
         .page.far { visibility: hidden; }
-        .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; padding: 14px 16px 12px; max-width: 900px;
+        .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; padding: 14px 16px 12px; max-width: var(--gh-w);
           margin: 0 auto; align-items: stretch; box-sizing: border-box; transform-origin: top center; }
         .grid > div { min-width: 0; }
         .grid > .tall > :first-child { display: block; height: 100%; }
@@ -3317,6 +3317,9 @@ class GlassHomePagerCard extends HTMLElement {
            screen (inline width) and scaled down from the left edge to fill it. The tablet never gets this class. */
         .root.compact .grid { max-width: none; margin: 0; transform-origin: top left; }
         .page { container-type: inline-size; }
+        ${GH_DEMO ? "@media (max-width: 600px) { .root.compact .grid { padding-bottom: 46px !important; } }" : ""}
+        @media (min-width: 1600px) and (min-height: 1000px) { .root { --gh-w: 1180px; } }
+        @media (min-width: 2200px) and (min-height: 1300px) { .root { --gh-w: 1400px; } }
         @container (max-width: 599px) {
           .root.reflow .grid > div[data-span="3"], .root.reflow .grid > div[data-span="4"] { grid-column: span 6 !important; }
           .root.reflow .grid { gap: 10px; padding: 12px 12px 10px; }
@@ -3330,7 +3333,7 @@ class GlassHomePagerCard extends HTMLElement {
         .dot { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.18); transition: width 0.2s ease, background 0.2s ease; }
         .dot.on { width: 20px; background: #a78bfa; }
         /* Floating glass bar; the current page is a softly glowing purple pill */
-        .nav { display: grid; grid-template-columns: repeat(${pages.length + (WNAV_SETTINGS ? 1 : 0)}, minmax(0, 1fr)); gap: 4px; max-width: 900px; margin: 6px auto 0;
+        .nav { display: grid; grid-template-columns: repeat(${pages.length + (WNAV_SETTINGS ? 1 : 0)}, minmax(0, 1fr)); gap: 4px; max-width: var(--gh-w); margin: 6px auto 0;
           padding: 6px; border-radius: 28px; background: ${LG_FLOAT_BG}; border: 1px solid ${LG_FLOAT_LINE}; box-shadow: ${LG_FLOAT_SHADOW}; }
         .nb { height: 60px; border: 0; border-radius: 22px; background: transparent; color: #8e8aa0; font: inherit; font-size: 12.5px; font-weight: 600;
           letter-spacing: 0.1px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer;
@@ -3338,6 +3341,16 @@ class GlassHomePagerCard extends HTMLElement {
         .nb.on { color: #fff; background: ${LG_ON_BG}; box-shadow: ${LG_ON_SHADOW}; }
         .nb:active { transform: scale(0.96); }
         .nb.on ha-icon { color: #fff; }
+  .nb { container-type: inline-size; }
+  .nb ha-icon { flex: none; }
+  .nt { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @container (max-width: 35.9px) { .nt { display: none; } }
+  /* short landscape screens (a phone on its side): icon beside the label, so the bar takes less height */
+  @media (max-height: 500px) and (min-width: 600px) {
+    .nb { height: 44px; flex-direction: row; gap: 6px; --mdc-icon-size: 21px; }
+    .nav { padding: 4px; }
+    .spacer { height: 64px; }
+  }
 
         /* Homepage editor (hidden unless editing; the normal page looks exactly as before) */
         .page { position: relative; }
@@ -3369,7 +3382,7 @@ class GlassHomePagerCard extends HTMLElement {
         .editing .w.drag > .cover { cursor: grabbing; background: rgba(139,92,246,0.12); box-shadow: 0 0 0 2px #a78bfa, 0 22px 44px rgba(0,0,0,0.55); }
         .ebar { display: none; }
         .editing .nav { display: none; }
-        .editing .ebar { display: grid; grid-template-columns: 1fr 1fr 1.25fr 1.25fr; gap: 6px; max-width: 900px; margin: 6px auto 0; padding: 6px;
+        .editing .ebar { display: grid; grid-template-columns: 1fr 1fr 1.25fr 1.25fr; gap: 6px; max-width: var(--gh-w); margin: 6px auto 0; padding: 6px;
           border-radius: 28px; background: ${LG_FLOAT_BG};
           border: 1px solid rgba(167,139,250,0.34); box-shadow: 0 12px 30px rgba(0,0,0,0.45), 0 0 22px rgba(139,92,246,0.18), inset 0 1px 0 rgba(255,255,255,0.20); }
         .eb { height: 60px; border: 0; border-radius: 22px; background: rgba(255,255,255,0.05); color: #d8d4e8; font: inherit; font-size: 13px;
@@ -3436,7 +3449,7 @@ class GlassHomePagerCard extends HTMLElement {
           + `<div class="grid"></div></div>`).join("")}</div></div>
         <div class="bar">
           <div class="dots">${pages.map((p, i) => `<span class="dot" data-i="${i}"></span>`).join("")}</div>
-          <div class="nav">${pages.map((p, i) => `<button class="nb" data-i="${i}" style="--acc:${p.accent || "#fff"}" aria-label="${esc(ghPageTitle(p.id, p.title))}"><ha-icon icon="${p.icon}"></ha-icon>${esc(ghPageTitle(p.id, p.title))}</button>`).join("")}${WNAV_SETTINGS ? `<button class="nb nbset" data-settings="1" aria-label="Settings"><ha-icon icon="mdi:cog-outline"></ha-icon>Settings</button>` : ""}</div>
+          <div class="nav">${pages.map((p, i) => `<button class="nb" data-i="${i}" style="--acc:${p.accent || "#fff"}" aria-label="${esc(ghPageTitle(p.id, p.title))}"><ha-icon icon="${p.icon}"></ha-icon><span class="nt">${esc(ghPageTitle(p.id, p.title))}</span></button>`).join("")}${WNAV_SETTINGS ? `<button class="nb nbset" data-settings="1" aria-label="Settings"><ha-icon icon="mdi:cog-outline"></ha-icon><span class="nt">Settings</span></button>` : ""}</div>
           <div class="ebar">
             <button class="eb" data-e="cancel"><ha-icon icon="mdi:close"></ha-icon>Cancel</button>
             <button class="eb" data-e="reset"><ha-icon icon="mdi:restore"></ha-icon>Reset</button>
@@ -6061,7 +6074,8 @@ class GlassHomeHeroCard extends HTMLElement {
           border: 1px solid rgba(255,255,255,0.16); box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 4px 14px rgba(6,3,20,0.18); }
         .pill ha-icon { --mdc-icon-size: 20px; width: 34px; height: 34px; flex: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .pill .v { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .pill .k { font-size: 12px; color: rgba(255,255,255,0.78); white-space: nowrap; }
+        .pill .k { font-size: 12px; color: rgba(255,255,255,0.78); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pill > div { min-width: 0; }
         .pill.news { cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: background 0.2s ease; }
         .pill.news:active { transform: scale(0.97); background: rgba(139,92,246,0.35); }
         ${NARROW_CSS_HERO}
@@ -9362,6 +9376,7 @@ class GlassHomeCameraCard extends HTMLElement {
           text-align: left; --mdc-icon-size: 24px; }
         .cam ha-icon { color: #ff453a; }
         .cam span { flex: 1; min-width: 0; } .cam b { display: block; font-size: 16px; } .cam small { display: block; font-size: 13px; color: #a29db8; }
+        .cam { min-width: 0; } .cam b, .cam small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cam.on { background: rgba(255,69,58,0.22); border: 1px solid rgba(255,69,58,0.55); }
         .cam.off ha-icon { color: #8e8aa0; }
       </style>
@@ -9417,6 +9432,16 @@ const WNAV_CSS = `
     min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .nb.on { color: #fff; background: ${LG_ON_BG}; box-shadow: ${LG_ON_SHADOW}; }
   .nb.on ha-icon { color: #fff; }
+  .nb { container-type: inline-size; }
+  .nb ha-icon { flex: none; }
+  .nt { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @container (max-width: 35.9px) { .nt { display: none; } }
+  /* short landscape screens (a phone on its side): icon beside the label, so the bar takes less height */
+  @media (max-height: 500px) and (min-width: 600px) {
+    .nb { height: 44px; flex-direction: row; gap: 6px; --mdc-icon-size: 21px; }
+    .nav { padding: 4px; }
+    .spacer { height: 64px; }
+  }
   .nb:active, .lk:active { transform: scale(0.96); }
   .wrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; pointer-events: none;
     padding: 2px max(14px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px)); }
@@ -9437,7 +9462,7 @@ const WNAV_CSS = `
     .wrap { padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
     .nav { gap: 2px; padding: 4px; border-radius: 24px; }
     .nb { height: 54px; padding: 0 1px; border-radius: 19px; font-size: 10.5px; letter-spacing: 0; gap: 3px; --mdc-icon-size: 22px; }
-    .spacer { height: 74px; }
+    .spacer { height: ${GH_DEMO ? 128 : 74}px; }
     .lk { height: 46px; font-size: 14px; border-radius: 19px; flex-basis: 120px; --mdc-icon-size: 20px; }
   }`;
 
@@ -9512,7 +9537,7 @@ class GlassHomeNavCard extends HTMLElement {
     if (c.variant === "links") {
       body = `<div class="links">${(c.links || []).filter((l) => ghFeature(l.feature)).map((l, k) => `<button class="lk${l.active ? " on" : ""}" data-k="${k}">${l.icon ? `<ha-icon icon="${esc(l.icon)}"></ha-icon>` : ""}<span>${esc(l.name || "")}</span></button>`).join("")}</div>`;
     } else {
-      body = `<div class="spacer"></div><div class="wrap"><div class="nav" style="--n:${WNAV_PAGES.length + (WNAV_SETTINGS ? 1 : 0)}">${WNAV_PAGES.map((p) => `<button class="nb${p.id === c.active ? " on" : ""}" data-id="${p.id}" aria-label="${esc(ghPageTitle(p.id, p.title))}"><ha-icon icon="${p.icon}"></ha-icon>${esc(ghPageTitle(p.id, p.title))}</button>`).join("")}${WNAV_SETTINGS ? `<button class="nb" data-id="settings" aria-label="Settings"><ha-icon icon="mdi:cog-outline"></ha-icon>Settings</button>` : ""}</div></div>`;
+      body = `<div class="spacer"></div><div class="wrap"><div class="nav" style="--n:${WNAV_PAGES.length + (WNAV_SETTINGS ? 1 : 0)}">${WNAV_PAGES.map((p) => `<button class="nb${p.id === c.active ? " on" : ""}" data-id="${p.id}" aria-label="${esc(ghPageTitle(p.id, p.title))}"><ha-icon icon="${p.icon}"></ha-icon><span class="nt">${esc(ghPageTitle(p.id, p.title))}</span></button>`).join("")}${WNAV_SETTINGS ? `<button class="nb" data-id="settings" aria-label="Settings"><ha-icon icon="mdi:cog-outline"></ha-icon><span class="nt">Settings</span></button>` : ""}</div></div>`;
     }
     this.shadowRoot.innerHTML = `<style>${WNAV_CSS}</style>${body}`;
     this.shadowRoot.querySelectorAll(".nb").forEach((b) => b.addEventListener("click", () => wnavGo(b.dataset.id === "settings" ? `${ghBase()}/settings` : `${ghBase()}/home#${b.dataset.id}`)));
@@ -9621,6 +9646,33 @@ class GlassHomeTvPowerCard extends HTMLElement {
   }
 }
 
+// Readable SVG text at any card size: minimum on-screen size in px (data-min on a text overrides it)
+const GH_SVG_MIN = 10;
+function ghSvgFix(root) {
+  for (const svg of root.querySelectorAll("svg[viewBox]")) {
+    const vb = svg.viewBox && svg.viewBox.baseVal, w = svg.getBoundingClientRect().width;
+    if (!vb || !vb.width || vb.width <= 48 || !w) continue; // icons are left alone
+    const k = w / vb.width;
+    for (const t of svg.querySelectorAll("text")) {
+      if (t.dataset.fs == null) t.dataset.fs = t.getAttribute("font-size") || "";
+      const base = Number(t.dataset.fs);
+      if (!base) continue;
+      if (t.classList.contains("gh-dims")) { t.style.display = base * k < 8.5 ? "none" : ""; continue; }
+      const min = Number(t.dataset.min) || GH_SVG_MIN;
+      const fs = base * k < min ? `${(min / k).toFixed(2)}px` : "";
+      if (t.style.fontSize !== fs) t.style.fontSize = fs;
+    }
+  }
+}
+function ghSvgWatch(host, root) {
+  let q = 0;
+  const run = () => { if (!q) q = requestAnimationFrame(() => { q = 0; ghSvgFix(root); }); };
+  try {
+    new ResizeObserver(run).observe(host);
+    new MutationObserver(run).observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["viewBox"] });
+  } catch (e) { /* older browser: charts keep their drawn sizes */ }
+}
+
 // Liquid Glass: every GlassHome card adopts the shared micro-interaction sheet when it creates its shadow root
 const LG_SHEET = (() => { try { const sh = new CSSStyleSheet(); sh.replaceSync(LG_SHARED_CSS); return sh; } catch (e) { return null; } })();
 if (LG_SHEET) {
@@ -9630,6 +9682,8 @@ if (LG_SHEET) {
     C.prototype.attachShadow = function (init) {
       const root = HTMLElement.prototype.attachShadow.call(this, init);
       try { root.adoptedStyleSheets = [...root.adoptedStyleSheets, LG_SHEET]; } catch (e) { /* older browser: the card simply keeps its own styles */ }
+      if (C === GlassHomeEnergyCard || C === GlassHomeWasherCard || C === GlassHomeLaundryCard || C === GlassHomeHeatingCard
+        || C === GlassHomeHouseCard || C === GlassHomeWeatherSheet) ghSvgWatch(this, root);
       return root;
     };
   });
@@ -9839,6 +9893,7 @@ const GH_DEPS = [
 const GH_ONB_CSS = `
   :host { display: block; container-type: inline-size; color: #fff; }
   ha-card { padding: clamp(14px, 4cqi, 24px); border-radius: 26px; }
+  ${GH_DEMO ? "@media (max-width: 599px) { :host { margin-bottom: 124px; } }" : ""}
   h1 { margin: 0; font-size: clamp(24px, 6cqi, 34px); font-weight: 750; letter-spacing: -0.5px; }
   .sub { color: #a29db8; margin: 6px 0 16px; font-size: 14.5px; line-height: 1.4; }
   .bar { height: 12px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow: hidden; }
@@ -9996,8 +10051,11 @@ const GHS_CSS = `
   :host { display: block; color: #fff; --acc: 139,92,246; --line: var(--lg-border, rgba(255,255,255,0.14));
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Roboto, "Segoe UI", sans-serif; }
   * { box-sizing: border-box; }
-  .shell { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: max(18px, env(safe-area-inset-top)) 16px 28px;
+  .shell { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center;
+    padding: max(18px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     background: #120d22 url("${GH_ASSETS}bg.svg") center / cover no-repeat fixed; }
+  ${GH_DEMO ? `/* phones: the demo label floats near the bottom, so the last buttons can scroll clear of it */
+  @media (max-width: 599px) { .shell { padding-bottom: calc(132px + env(safe-area-inset-bottom)); } }` : ""}
   .frame { width: 100%; max-width: 980px; display: flex; flex-direction: column; gap: 16px; }
   .glass { background: ${GLASS_BG}; border: 1px solid var(--line); box-shadow: ${GLASS_EDGE}; border-radius: 28px; }
   .panel { padding: clamp(18px, 3.4vw, 32px); }
@@ -11192,7 +11250,7 @@ class GlassHomeSetupBase extends HTMLElement {
   }
   _importHtml() {
     const u = this._ui;
-    return `<input type="file" accept="application/json,.json" aria-label="Choose a settings file" data-k="import">
+    return `<div class="row"><label class="btn" style="cursor:pointer"><ha-icon icon="mdi:file-upload-outline"></ha-icon>Choose a settings file<input type="file" accept="application/json,.json" class="vh" aria-label="Choose a settings file" data-k="import"></label></div>
         ${u.importErr ? `<div class="note bad">${esc(u.importErr)}</div>` : ""}
         ${u.importCfg ? `<div class="note">Found settings for ${esc((u.importCfg.household && u.importCfg.household.name) || "a home")} with ${(u.importCfg.rooms || []).length} rooms. <button type="button" class="btn sm primary" data-act="importApply">Use these</button></div>` : ""}`;
   }
