@@ -1,0 +1,85 @@
+# Glass Home: Apple Home-inspired dark Liquid Glass theme. Deep charcoal-purple background,
+# frosted glass cards with a bright top rim and soft depth, purple glow for things that are on.
+# The lg-* values are the shared Liquid Glass tokens: Home Assistant exposes them as --lg-* CSS
+# variables, and the Glass Home cards (glasshome-cards.js) read the same ones, so one edit here
+# restyles every surface.
+# Applied per view in the Glass Home dashboard, so other dashboards are unaffected.
+# Reload without a restart: Developer tools > Actions > frontend.reload_themes
+glasshome:
+  # Surfaces
+  primary-background-color: "#120d22"
+  secondary-background-color: "#1d1733"
+  lovelace-background: "#120d22 url('/local/glasshome/bg.svg') center / cover no-repeat"
+  # Liquid Glass tokens
+  # Cards (resting surfaces): frosted fill, bright top rim, faint lower rim, soft ambient shadow.
+  # No blur behind cards: nothing moves behind them and it is too slow on the wall tablet.
+  lg-fill: "linear-gradient(150deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.05) 34%, rgba(255, 255, 255, 0.02) 62%, rgba(255, 255, 255, 0.05) 100%), rgba(30, 23, 56, 0.56)"
+  lg-border: "rgba(255, 255, 255, 0.14)"
+  lg-shadow: "inset 0 1px 0 rgba(255, 255, 255, 0.20), inset 0 -1px 0 rgba(255, 255, 255, 0.05), inset 0 0 14px rgba(255, 255, 255, 0.025), 0 8px 24px rgba(6, 3, 20, 0.30)"
+  # Floating layers (nav bar, sheets, pop-ups): thinner glass with a real backdrop blur
+  lg-float-fill: "linear-gradient(155deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(255, 255, 255, 0.07) 100%), rgba(26, 20, 50, 0.60)"
+  lg-float-border: "rgba(255, 255, 255, 0.17)"
+  lg-float-shadow: "0 16px 40px rgba(4, 2, 16, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 rgba(255, 255, 255, 0.06)"
+  lg-float-blur: "blur(22px) saturate(175%)"
+
+  # Glass panels (Home Assistant's own cards use the same tokens)
+  card-background-color: "#1d1733"
+  ha-card-background: "linear-gradient(150deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.05) 34%, rgba(255, 255, 255, 0.02) 62%, rgba(255, 255, 255, 0.05) 100%), rgba(30, 23, 56, 0.56)"
+  ha-card-border-radius: "24px"
+  ha-card-border-width: "1px"
+  ha-card-border-color: "rgba(255, 255, 255, 0.14)"
+  ha-card-box-shadow: "inset 0 1px 0 rgba(255, 255, 255, 0.20), inset 0 -1px 0 rgba(255, 255, 255, 0.05), inset 0 0 14px rgba(255, 255, 255, 0.025), 0 8px 24px rgba(6, 3, 20, 0.30)"
+  divider-color: "rgba(255, 255, 255, 0.10)"
+
+  # Text (secondary passes 4.5:1 on the glass cards)
+  primary-text-color: "#ffffff"
+  secondary-text-color: "#a29db8"
+  disabled-text-color: "#6e6a82"
+  text-primary-color: "#ffffff"
+  primary-font-family: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, 'Segoe UI', sans-serif"
+  ha-font-family-body: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, 'Segoe UI', sans-serif"
+  ha-font-family-heading: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', Roboto, 'Segoe UI', sans-serif"
+
+  # Accents: soft purple
+  primary-color: "#8b5cf6"
+  accent-color: "#a78bfa"
+  state-icon-color: "#a29db8"
+
+  # Header and sidebar (hidden in kiosk mode)
+  # frosted bar: the page scrolls behind it
+  app-header-background-color: "rgba(18, 13, 34, 0.62)"
+  app-header-backdrop-filter: "blur(20px) saturate(170%)"
+  app-header-text-color: "#ffffff"
+  sidebar-background-color: "#0f0b1d"
+  sidebar-text-color: "#ffffff"
+  sidebar-icon-color: "#a29db8"
+  sidebar-selected-icon-color: "#a78bfa"
+  sidebar-selected-text-color: "#ffffff"
+
+  # More-info dialogs and sheets: frosted glass over the dimmed dashboard
+  mdc-theme-surface: "#1d1733"
+  ha-dialog-surface-background: "rgba(31, 24, 58, 0.80)"
+  ha-dialog-surface-backdrop-filter: "blur(26px) saturate(170%)"
+  mdc-dialog-scrim-color: "rgba(6, 4, 20, 0.50)"
+  ha-dialog-border-radius: "28px"
+
+  # Switches and inputs
+  switch-checked-color: "#8b5cf6"
+  switch-checked-button-color: "#ffffff"
+  switch-checked-track-color: "#8b5cf6"
+  input-fill-color: "rgba(255, 255, 255, 0.06)"
+
+  # Bubble Card bottom bar
+  bubble-main-background-color: "rgba(22, 17, 40, 0.88)"
+  bubble-secondary-background-color: "rgba(255, 255, 255, 0.08)"
+  bubble-accent-color: "rgba(139, 92, 246, 0.85)"
+  bubble-border-radius: "26px"
+  bubble-box-shadow: "0 10px 30px rgba(0, 0, 0, 0.45)"
+
+  # card-mod: quiet glass interactions on every card in Glass Home views
+  card-mod-theme: glasshome
+  card-mod-card: |
+    ha-card { transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, transform 0.14s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    ha-card:active { transform: scale(0.98); }
+    @media (hover: hover) { ha-card:hover { border-color: rgba(255, 255, 255, 0.24); } }
+    @media (prefers-reduced-motion: reduce) { ha-card { transition: none; } ha-card:active { transform: none; } }

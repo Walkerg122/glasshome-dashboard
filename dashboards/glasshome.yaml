@@ -1,0 +1,2467 @@
+# Glass Home dashboard (YAML mode). Install it as /config/glasshome/dashboard.yaml at the dashboard
+# URL "glass-home" (see docs/install.md). Every [[token]] is filled in from the glasshome: section below,
+# which reads your own settings from /config/glasshome/config.yaml. That file is never served publicly:
+# the cards read it over your signed-in Home Assistant connection. Nothing personal lives in this file.
+# Cards whose settings are missing show a setup placeholder; switched-off features are left out.
+# Open /glass-home/setup for the setup checklist.
+# Storage-mode (UI) dashboards: paste the contents of config.yaml under glasshome: instead of !include.
+
+glasshome: !include config.yaml
+
+kiosk_mode:
+  non_admin_settings:
+    hide_sidebar: true
+    hide_menubutton: true
+    hide_search: true
+    hide_assistant: true
+    hide_notifications: true
+    hide_settings: true
+    hide_account: true
+    hide_edit_dashboard: true
+    block_overflow: true
+    hide_dialog_header_settings: true
+    hide_dialog_header_overflow: true
+    ignore_disable_km: true
+title: Glass Home
+views:
+  - title: Home
+    path: home
+    icon: mdi:home
+    type: panel
+    theme: glasshome
+    cards:
+      - type: custom:glasshome-pager-card
+        start: home
+        pages:
+          - id: media
+            title: Media
+            icon: mdi:television-play
+            accent: "#a78bfa"
+            cards:
+              - type: markdown
+                content: |-
+                  {%- set tv = '[[?media.tv]]' -%}
+                  # [[_page.media]]
+                  {% if tv %}TV · **{{ states(tv) | replace('_', ' ') | title }}**{{ (' · ' ~ state_attr(tv, 'media_title')) if state_attr(tv, 'media_title') else '' }}{% endif %}
+
+                  [[?_page.media_sub]]
+                span: 12
+                card_mod:
+                  style:
+                    .: |
+                      ha-card { background: radial-gradient(90% 150% at 100% 0%, rgba(255,95,162,0.40) 0%, transparent 60%), linear-gradient(160deg, #34296a 0%, #241c4c 50%, #161230 100%); border: none; border-radius: 24px !important; padding: 6px 8px; }
+                    ha-markdown$: |
+                      h1 { margin: 0; font-size: 40px; font-weight: 700; letter-spacing: -1px; color: #fff; line-height: 1.05; }
+                      h3 { margin: 0 0 4px; font-size: 18px; font-weight: 600; color: rgba(255,255,255,0.85); }
+                      p { margin: 8px 0 0; font-size: 17px; color: rgba(255,255,255,0.82); line-height: 1.4; }
+                      strong { color: #fff; }
+              - type: custom:glasshome-spotify-card
+                span: 12
+                entity: "[[media.spotify]]"
+                device: "[[media.spotify_device]]"
+                device_label: "[[?media.spotify_device_label]]"
+                device_note: "[[?media.spotify_device_note]]"
+                tv: "[[?media.tv_cast]]"
+                app: com.spotify.tv.android
+                volume_level_entity: "[[?media.tv]]"
+                rows: 2
+                feature: spotify
+                setup_label: Spotify
+              - type: custom:glasshome-music-card
+                span: 12
+                entity: "[[media.music.player]]"
+                service: "[[?media.music.service]]"
+                rows: 2
+                feature: music
+                setup_label: Music
+              - type: button
+                name: Volume −
+                icon: mdi:volume-minus
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: media_player.volume_down
+                  target:
+                    entity_id: "[[media.tv_cast]]"
+                span: 4
+                icon_height: 44px
+                card_mod:
+                  style: |
+                    ha-card { height: 92px; border-radius: 24px !important; font-size: 15px; font-weight: 600; --mdc-icon-size: 24px; gap: 6px; justify-content: center; }
+                    ha-state-icon { color: #ff7ab6; background: rgba(255,122,182,0.15); border-radius: 50%; width: 44px !important; box-shadow: 0 0 14px rgba(255,122,182,0.18); display: flex; align-items: center; justify-content: center; }
+                show_name: false
+                height: 92
+                optional: true
+              - type: button
+                name: Volume +
+                icon: mdi:volume-plus
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: media_player.volume_up
+                  target:
+                    entity_id: "[[media.tv_cast]]"
+                span: 4
+                icon_height: 44px
+                card_mod:
+                  style: |
+                    ha-card { height: 92px; border-radius: 24px !important; font-size: 15px; font-weight: 600; --mdc-icon-size: 24px; gap: 6px; justify-content: center; }
+                    ha-state-icon { color: #ff7ab6; background: rgba(255,122,182,0.15); border-radius: 50%; width: 44px !important; box-shadow: 0 0 14px rgba(255,122,182,0.18); display: flex; align-items: center; justify-content: center; }
+                show_name: false
+                height: 92
+                optional: true
+              - type: custom:glasshome-tv-power-card
+                name: TV Power
+                remote: "[[media.tv_remote]]"
+                script: "[[media.tv_power_script]]"
+                icon_only: true
+                span: 4
+                height: 92
+                feature: tv_power
+              - type: tile
+                entity: "[[scenes.film]]"
+                name: Film
+                icon: mdi:movie-open-outline
+                color: amber
+                span: 6
+                state_content:
+                  - last_changed
+                tap_action:
+                  action: perform-action
+                  perform_action: scene.turn_on
+                  target:
+                    entity_id: "[[scenes.film]]"
+                hold_action:
+                  action: navigate
+                  navigation_path: /config/scene/dashboard
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 24px !important; }
+                vertical: true
+                height: 112
+                optional: true
+              - type: tile
+                entity: "[[scenes.evening]]"
+                name: Evening
+                icon: mdi:weather-sunset
+                color: amber
+                span: 6
+                state_content:
+                  - last_changed
+                tap_action:
+                  action: perform-action
+                  perform_action: scene.turn_on
+                  target:
+                    entity_id: "[[scenes.evening]]"
+                hold_action:
+                  action: navigate
+                  navigation_path: /config/scene/dashboard
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 24px !important; }
+                vertical: true
+                height: 112
+                optional: true
+            feature: media|spotify|music
+          - id: security
+            title: Security
+            icon: mdi:shield-home-outline
+            accent: "#a78bfa"
+            cards:
+              - type: markdown
+                content: |-
+                  {%- set cams = [[cctv.cameras|json]] -%}
+                  {%- set up = cams | map(attribute='entity') | reject('is_state', 'unavailable') | reject('is_state', 'unknown') | list | count -%}
+                  # Security
+                  **{{ up }}/{{ cams | count }}** cameras online{% if '[[?presence.person]]' %} · {{ state_attr('[[?presence.person]]', 'friendly_name') }} {{ 'home' if is_state('[[?presence.person]]', 'home') else 'away' }}{% endif %}
+                span: 12
+                card_mod:
+                  style:
+                    .: |
+                      ha-card { background: radial-gradient(90% 150% at 100% 0%, rgba(255,107,107,0.38) 0%, transparent 60%), linear-gradient(160deg, #34296a 0%, #241c4c 50%, #161230 100%); border: none; border-radius: 24px !important; padding: 6px 8px; }
+                    ha-markdown$: |
+                      h1 { margin: 0; font-size: 40px; font-weight: 700; letter-spacing: -1px; color: #fff; line-height: 1.05; }
+                      h3 { margin: 0 0 4px; font-size: 18px; font-weight: 600; color: rgba(255,255,255,0.85); }
+                      p { margin: 8px 0 0; font-size: 17px; color: rgba(255,255,255,0.82); line-height: 1.4; }
+                      strong { color: #fff; }
+              - type: custom:glasshome-camera-card
+                span: 12
+                cameras: "[[cctv.cameras]]"
+                setup_label: Cameras
+            feature: cctv
+          - id: lights
+            title: Lights
+            icon: mdi:lightbulb-outline
+            accent: "#a78bfa"
+            cards:
+              - type: markdown
+                content: |-
+                  {%- set all = [[?lighting.all|json]] -%}
+                  {%- set n = all | select('is_state', 'on') | list | count -%}
+                  # Lighting
+                  **{{ n }} of {{ all | count }}** on
+                span: 12
+                card_mod:
+                  style:
+                    .: |
+                      ha-card { background: radial-gradient(90% 150% at 100% 0%, rgba(255,196,90,0.40) 0%, transparent 60%), linear-gradient(160deg, #34296a 0%, #241c4c 50%, #161230 100%); border: none; border-radius: 24px !important; padding: 6px 8px; }
+                    ha-markdown$: |
+                      h1 { margin: 0; font-size: 40px; font-weight: 700; letter-spacing: -1px; color: #fff; line-height: 1.05; }
+                      h3 { margin: 0 0 4px; font-size: 18px; font-weight: 600; color: rgba(255,255,255,0.85); }
+                      p { margin: 8px 0 0; font-size: 17px; color: rgba(255,255,255,0.82); line-height: 1.4; }
+                      strong { color: #fff; }
+              - type: custom:glasshome-setup-card
+                unless: rooms
+                label: Lights and rooms
+                missing:
+                  - rooms
+                span: 12
+              - type: button
+                name: All on
+                icon: mdi:lightbulb-group
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_on
+                  target:
+                    entity_id: "[[lighting.all]]"
+                  confirmation:
+                    text: Turn on all lights and LED strips?
+                span: 3
+                icon_height: 44px
+                card_mod:
+                  style: |
+                    ha-card { height: 92px; border-radius: 24px !important; font-size: 15px; font-weight: 600; --mdc-icon-size: 24px; gap: 6px; justify-content: center; }
+                    ha-state-icon { color: #c4b5fd; background: rgba(196,181,253,0.15); border-radius: 50%; width: 44px !important; box-shadow: 0 0 14px rgba(196,181,253,0.18); display: flex; align-items: center; justify-content: center; }
+                optional: true
+              - type: button
+                name: All off
+                icon: mdi:lightbulb-group-off-outline
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id: "[[lighting.all]]"
+                  confirmation:
+                    text: Turn off all lights and LED strips?
+                span: 3
+                icon_height: 44px
+                card_mod:
+                  style: |
+                    ha-card { height: 92px; border-radius: 24px !important; font-size: 15px; font-weight: 600; --mdc-icon-size: 24px; gap: 6px; justify-content: center; }
+                    ha-state-icon { color: #98989f; background: rgba(152,152,159,0.15); border-radius: 50%; width: 44px !important; box-shadow: 0 0 14px rgba(152,152,159,0.18); display: flex; align-items: center; justify-content: center; }
+                optional: true
+              - type: button
+                name: Edit scenes
+                icon: mdi:pencil
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /glass-home/lights-scenes
+                span: 3
+                icon_height: 44px
+                card_mod:
+                  style: |
+                    ha-card { height: 92px; border-radius: 24px !important; font-size: 15px; font-weight: 600; --mdc-icon-size: 24px; gap: 6px; justify-content: center; }
+                    ha-state-icon { color: #ffd60a; background: rgba(255,214,10,0.15); border-radius: 50%; width: 44px !important; box-shadow: 0 0 14px rgba(255,214,10,0.18); display: flex; align-items: center; justify-content: center; }
+              - type: button
+                name: Schedules
+                icon: mdi:clock-outline
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /glass-home/lights-schedules
+                span: 3
+                icon_height: 44px
+                card_mod:
+                  style: |
+                    ha-card { height: 92px; border-radius: 24px !important; font-size: 15px; font-weight: 600; --mdc-icon-size: 24px; gap: 6px; justify-content: center; }
+                    ha-state-icon { color: #ffd60a; background: rgba(255,214,10,0.15); border-radius: 50%; width: 44px !important; box-shadow: 0 0 14px rgba(255,214,10,0.18); display: flex; align-items: center; justify-content: center; }
+              - type: tile
+                entity: "[[scenes.bright]]"
+                name: Bright
+                icon: mdi:white-balance-sunny
+                color: amber
+                span: 4
+                state_content:
+                  - last_changed
+                tap_action:
+                  action: perform-action
+                  perform_action: scene.turn_on
+                  target:
+                    entity_id: "[[scenes.bright]]"
+                hold_action:
+                  action: navigate
+                  navigation_path: /config/scene/dashboard
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 24px !important; }
+                optional: true
+              - type: tile
+                entity: "[[scenes.relax]]"
+                name: Relax
+                icon: mdi:sofa-outline
+                color: amber
+                span: 4
+                state_content:
+                  - last_changed
+                tap_action:
+                  action: perform-action
+                  perform_action: scene.turn_on
+                  target:
+                    entity_id: "[[scenes.relax]]"
+                hold_action:
+                  action: navigate
+                  navigation_path: /config/scene/dashboard
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 24px !important; }
+                optional: true
+              - type: tile
+                entity: "[[scenes.evening]]"
+                name: Evening
+                icon: mdi:weather-sunset
+                color: amber
+                span: 4
+                state_content:
+                  - last_changed
+                tap_action:
+                  action: perform-action
+                  perform_action: scene.turn_on
+                  target:
+                    entity_id: "[[scenes.evening]]"
+                hold_action:
+                  action: navigate
+                  navigation_path: /config/scene/dashboard
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 24px !important; }
+                optional: true
+              - type: tile
+                entity: "[[scenes.night]]"
+                name: Night
+                icon: mdi:weather-night
+                color: amber
+                span: 4
+                state_content:
+                  - last_changed
+                tap_action:
+                  action: perform-action
+                  perform_action: scene.turn_on
+                  target:
+                    entity_id: "[[scenes.night]]"
+                hold_action:
+                  action: navigate
+                  navigation_path: /config/scene/dashboard
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 24px !important; }
+                optional: true
+              - type: tile
+                entity: "[[scenes.film]]"
+                name: Film
+                icon: mdi:movie-open-outline
+                color: amber
+                span: 4
+                state_content:
+                  - last_changed
+                tap_action:
+                  action: perform-action
+                  perform_action: scene.turn_on
+                  target:
+                    entity_id: "[[scenes.film]]"
+                hold_action:
+                  action: navigate
+                  navigation_path: /config/scene/dashboard
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 24px !important; }
+                optional: true
+              - type: tile
+                entity: "[[scenes.all_off]]"
+                name: All off
+                icon: mdi:lightbulb-group-off-outline
+                color: amber
+                span: 4
+                state_content:
+                  - last_changed
+                tap_action:
+                  action: perform-action
+                  perform_action: scene.turn_on
+                  target:
+                    entity_id: "[[scenes.all_off]]"
+                hold_action:
+                  action: navigate
+                  navigation_path: /config/scene/dashboard
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 24px !important; }
+                optional: true
+              - type: custom:glasshome-room-card
+                name: "[[rooms.0.name]]"
+                icon: "[[?rooms.0.icon]]"
+                span: 4
+                stacked: true
+                entities: "[[rooms.0.lights]]"
+                optional: true
+              - type: custom:glasshome-room-card
+                name: "[[rooms.1.name]]"
+                icon: "[[?rooms.1.icon]]"
+                span: 4
+                stacked: true
+                entities: "[[rooms.1.lights]]"
+                optional: true
+              - type: custom:glasshome-room-card
+                name: "[[rooms.2.name]]"
+                icon: "[[?rooms.2.icon]]"
+                span: 4
+                stacked: true
+                entities: "[[rooms.2.lights]]"
+                optional: true
+              - type: custom:glasshome-light-card
+                entity: "[[lighting.lights.0]]"
+                span: 6
+                optional: true
+              - type: custom:glasshome-light-card
+                entity: "[[lighting.lights.1]]"
+                span: 6
+                icon: mdi:led-strip-variant
+                power: "[[lighting.power.1]]"
+                optional: true
+              - type: custom:glasshome-light-card
+                entity: "[[lighting.lights.2]]"
+                span: 6
+                optional: true
+              - type: custom:glasshome-light-card
+                entity: "[[lighting.lights.3]]"
+                span: 6
+                icon: mdi:led-strip-variant
+                power: "[[lighting.power.3]]"
+                optional: true
+              - type: tile
+                entity: "[[lighting.status_only.0]]"
+                icon: mdi:light-recessed
+                color: amber
+                tap_action:
+                  action: more-info
+                card_mod:
+                  style: |
+                    {% set e = config.entity %}
+                    {% set d = e.split('.')[0] %}
+                    {% set s = states(e) %}
+                    {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                          and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                    ha-card {
+                      border-radius: 24px !important;
+                      {% if on %}
+                      background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                      border-color: rgba(167, 139, 250, 0.5) !important;
+                      box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                      --secondary-text-color: rgba(255, 255, 255, 0.82);
+                      {% endif %}
+                    }
+                span: 3
+                optional: true
+              - type: tile
+                entity: "[[lighting.status_only.1]]"
+                icon: mdi:light-recessed
+                color: amber
+                tap_action:
+                  action: more-info
+                card_mod:
+                  style: |
+                    {% set e = config.entity %}
+                    {% set d = e.split('.')[0] %}
+                    {% set s = states(e) %}
+                    {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                          and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                    ha-card {
+                      border-radius: 24px !important;
+                      {% if on %}
+                      background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                      border-color: rgba(167, 139, 250, 0.5) !important;
+                      box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                      --secondary-text-color: rgba(255, 255, 255, 0.82);
+                      {% endif %}
+                    }
+                span: 3
+                optional: true
+              - type: tile
+                entity: "[[lighting.status_only.2]]"
+                icon: mdi:light-recessed
+                color: amber
+                tap_action:
+                  action: more-info
+                card_mod:
+                  style: |
+                    {% set e = config.entity %}
+                    {% set d = e.split('.')[0] %}
+                    {% set s = states(e) %}
+                    {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                          and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                    ha-card {
+                      border-radius: 24px !important;
+                      {% if on %}
+                      background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                      border-color: rgba(167, 139, 250, 0.5) !important;
+                      box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                      --secondary-text-color: rgba(255, 255, 255, 0.82);
+                      {% endif %}
+                    }
+                span: 3
+                optional: true
+              - type: tile
+                entity: "[[lighting.status_only.3]]"
+                icon: mdi:light-recessed
+                color: amber
+                tap_action:
+                  action: more-info
+                card_mod:
+                  style: |
+                    {% set e = config.entity %}
+                    {% set d = e.split('.')[0] %}
+                    {% set s = states(e) %}
+                    {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                          and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                    ha-card {
+                      border-radius: 24px !important;
+                      {% if on %}
+                      background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                      border-color: rgba(167, 139, 250, 0.5) !important;
+                      box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                      --secondary-text-color: rgba(255, 255, 255, 0.82);
+                      {% endif %}
+                    }
+                span: 3
+                optional: true
+            feature: lighting
+          - id: home
+            title: Home
+            icon: mdi:home-outline
+            accent: "#a78bfa"
+            cards:
+              - type: custom:glasshome-hero-card
+                span: 12
+                weather: "[[?weather.entity]]"
+                indoor: "[[?climate.temperature]]"
+                climate: "[[?climate.thermostat]]"
+                lights: "[[?lighting.all]]"
+                cameras: "[[?cctv.cameras]]"
+                sun_times: true
+                rain_alert: true
+                uid: hero
+                person: "[[?presence.person]]"
+                setup_label: Weather
+              - type: custom:glasshome-bin-card
+                span: 12
+                uid: status-bins
+                feature: bins
+              - type: custom:glasshome-chip-card
+                kind: energy
+                entity: "[[energy.electricity.demand]]"
+                name: Energy
+                icon: mdi:lightning-bolt
+                span: 12
+                tap_action:
+                  action: navigate
+                  navigation_path: /glass-home/home#energy
+                entities:
+                  - "[[?energy.electricity.today_cost]]"
+                  - "[[?energy.gas.today_cost]]"
+                uid: status-energy
+                feature: energy
+                optional: true
+                kwh:
+                  - "[[?energy.electricity.today_kwh]]"
+                  - "[[?energy.gas.today_kwh]]"
+              - type: custom:glasshome-light-card
+                entity: "[[lighting.lights.2]]"
+                span: 3
+                compact: true
+                uid: control-hallway
+                optional: true
+              - type: custom:glasshome-all-card
+                entities: "[[lighting.all]]"
+                span: 6
+                uid: lights-all
+                optional: true
+              - type: custom:glasshome-light-card
+                entity: "[[lighting.lights.0]]"
+                span: 3
+                compact: true
+                uid: control-living-room
+                optional: true
+              - type: custom:glasshome-light-card
+                entity: "[[lighting.lights.3]]"
+                span: 3
+                icon: mdi:led-strip-variant
+                power: "[[?lighting.power.3]]"
+                compact: true
+                uid: control-kitchen-plinth
+                optional: true
+              - type: button
+                name: Film
+                icon: mdi:movie-open-outline
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: scene.turn_on
+                  target:
+                    entity_id: "[[scenes.film]]"
+                span: 3
+                icon_height: 44px
+                card_mod:
+                  style: |
+                    ha-card { height: 92px; border-radius: 24px !important; font-size: 15px; font-weight: 600; --mdc-icon-size: 24px; gap: 6px; justify-content: center; }
+                    ha-state-icon { color: #ff8a65; background: rgba(255,138,101,0.15); border-radius: 50%; width: 44px !important; box-shadow: 0 0 14px rgba(255,138,101,0.18); display: flex; align-items: center; justify-content: center; }
+                uid: shortcut-boost
+                optional: true
+              - type: button
+                name: Bright
+                icon: mdi:white-balance-sunny
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: scene.turn_on
+                  target:
+                    entity_id: "[[scenes.bright]]"
+                span: 3
+                icon_height: 44px
+                card_mod:
+                  style: |
+                    ha-card { height: 92px; border-radius: 24px !important; font-size: 15px; font-weight: 600; --mdc-icon-size: 24px; gap: 6px; justify-content: center; }
+                    ha-state-icon { color: #a78bfa; background: rgba(167,139,250,0.15); border-radius: 50%; width: 44px !important; box-shadow: 0 0 14px rgba(167,139,250,0.18); display: flex; align-items: center; justify-content: center; }
+                uid: shortcut-house
+                optional: true
+              - type: custom:glasshome-light-card
+                entity: "[[lighting.lights.1]]"
+                span: 3
+                icon: mdi:led-strip-variant
+                power: "[[?lighting.power.1]]"
+                compact: true
+                uid: control-tv-led
+                optional: true
+              - type: custom:glasshome-chip-card
+                kind: climate
+                entity: "[[climate.thermostat]]"
+                name: Climate
+                icon: mdi:thermostat
+                span: 4
+                tap_action:
+                  action: navigate
+                  navigation_path: /glass-home/home#climate
+                control: "[[?heating.control]]"
+                uid: status-climate
+                feature: climate
+              - type: custom:glasshome-chip-card
+                kind: laundry
+                entity: "[[laundry.job_state]]"
+                name: Laundry
+                icon: mdi:washing-machine
+                span: 4
+                tap_action:
+                  action: navigate
+                  navigation_path: /glass-home/laundry
+                machine: "[[laundry.machine_state]]"
+                completion: "[[laundry.completion_time]]"
+                uid: status-laundry
+                feature: laundry
+              - type: markdown
+                content: |-
+                  {%- set n = namespace(items=[]) -%}
+                  {%- for c in states.camera if c.state in ['unavailable', 'unknown'] -%}
+                  {%- set n.items = n.items + ['<ha-icon icon="mdi:cctv-off"></ha-icon>' ~ c.name ~ ' is offline'] -%}
+                  {%- endfor -%}
+                  {%- for b in states.sensor if b.attributes.device_class == 'battery' and b.state | int(100) < 20 -%}
+                  {%- set n.items = n.items + ['<ha-icon icon="mdi:battery-low"></ha-icon>' ~ b.name ~ ' is low (' ~ b.state ~ '%)'] -%}
+                  {%- endfor -%}
+                  {%- set ups = states.update | selectattr('state', 'eq', 'on') | list | count -%}
+                  {%- if ups -%}{%- set n.items = n.items + ['<ha-icon icon="mdi:package-up"></ha-icon>' ~ ups ~ ' update' ~ ('' if ups == 1 else 's') ~ ' available'] -%}{%- endif -%}
+                  {%- if n.items -%}{{ n.items | join('\n\n') }}{%- endif -%}
+                card_mod:
+                  style:
+                    .: |
+                      ha-card { padding: 4px 6px; border-radius: 24px !important; }
+                    ha-markdown$: |
+                      p { margin: 6px 0; font-size: 16px; line-height: 1.45; color: #98989f; }
+                      strong { color: #ffffff; }
+                      ha-icon { --mdc-icon-size: 20px; margin-right: 8px; vertical-align: -3px; color: #98989f; }
+                      ha-icon[icon="mdi:check-circle"] { color: #30d158; }
+                      ha-icon[icon="mdi:alert-circle"], ha-icon[icon="mdi:cctv-off"] { color: #ff9f0a; }
+                show_empty: false
+                span: 12
+                uid: attention
+                demo: false
+              - type: button
+                name: Evening
+                icon: mdi:weather-sunset
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: scene.turn_on
+                  target:
+                    entity_id: "[[scenes.evening]]"
+                span: 4
+                icon_height: 44px
+                card_mod:
+                  style: |
+                    ha-card { height: 92px; border-radius: 24px !important; font-size: 15px; font-weight: 600; --mdc-icon-size: 24px; gap: 6px; justify-content: center; }
+                    ha-state-icon { color: #ffb340; background: rgba(255,179,64,0.15); border-radius: 50%; width: 44px !important; box-shadow: 0 0 14px rgba(255,179,64,0.18); display: flex; align-items: center; justify-content: center; }
+                uid: shortcut-evening
+                optional: true
+              - type: custom:glasshome-chip-card
+                kind: camera
+                entity: "[[cctv.cameras.0.entity]]"
+                name: "[[cctv.cameras.0.name]]"
+                icon: mdi:cctv
+                span: 3
+                tap_action:
+                  action: more-info
+                uid: t-mw2c2kncoyt4
+                feature: cctv
+                optional: true
+              - type: custom:glasshome-chip-card
+                kind: camera
+                entity: "[[cctv.cameras.1.entity]]"
+                name: "[[cctv.cameras.1.name]]"
+                icon: mdi:cctv
+                span: 3
+                tap_action:
+                  action: more-info
+                uid: t-mw2c2n1e1y1t
+                feature: cctv
+                optional: true
+              - type: custom:glasshome-chip-card
+                kind: camera
+                entity: "[[cctv.cameras.2.entity]]"
+                name: "[[cctv.cameras.2.name]]"
+                icon: mdi:cctv
+                span: 3
+                tap_action:
+                  action: more-info
+                uid: t-mw2c2owh31tr
+                feature: cctv
+                optional: true
+              - type: custom:glasshome-chip-card
+                kind: camera
+                entity: "[[cctv.cameras.3.entity]]"
+                name: "[[cctv.cameras.3.name]]"
+                icon: mdi:cctv
+                span: 3
+                tap_action:
+                  action: more-info
+                uid: t-mw2c2qim5vxk
+                feature: cctv
+                optional: true
+            banner:
+              type: custom:glasshome-bin-banner-card
+              feature: bins
+            edit:
+              storage_key: glasshome_homepage
+              exclude: []
+              status_only: "[[?lighting.status_only]]"
+          - id: climate
+            title: Climate
+            icon: mdi:thermometer
+            accent: "#a78bfa"
+            cards:
+              - type: thermostat
+                entity: "[[climate.thermostat]]"
+                feature: "!heating_hive"
+                span: 12
+                setup_label: Thermostat
+              - type: custom:glasshome-heating-card
+                section: control
+                compact: true
+                span: 12
+                entity: "[[heating.climate]]"
+                current: "[[heating.current]]"
+                target: "[[heating.target]]"
+                boiler: "[[heating.boiler]]"
+                boost: "[[heating.boost]]"
+                hub: "[[?heating.hub]]"
+                battery: "[[?heating.battery]]"
+                schedule: "[[heating.schedule]]"
+                control: "[[heating.control]]"
+                comfort: "[[heating.comfort]]"
+                eco: "[[heating.eco]]"
+                title: "[[?heating.title]]"
+                feature: heating_hive
+                setup_label: Hive heating
+              - type: tile
+                entity: "[[climate.heater.switch]]"
+                name: Heater
+                icon: mdi:radiator
+                color: deep-orange
+                icon_tap_action:
+                  action: toggle
+                card_mod:
+                  style: |
+                    {% set e = config.entity %}
+                    {% set d = e.split('.')[0] %}
+                    {% set s = states(e) %}
+                    {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                          and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                    ha-card {
+                      border-radius: 24px !important;
+                      {% if on %}
+                      background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                      border-color: rgba(167, 139, 250, 0.5) !important;
+                      box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                      --secondary-text-color: rgba(255, 255, 255, 0.82);
+                      {% endif %}
+                    }
+                span: 6
+                uid: control-heater
+                optional: true
+              - type: tile
+                entity: "[[climate.heater.power]]"
+                name: Heater usage
+                icon: mdi:flash
+                color: yellow
+                card_mod:
+                  style: |
+                    {% set e = config.entity %}
+                    {% set d = e.split('.')[0] %}
+                    {% set s = states(e) %}
+                    {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                          and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                    ha-card {
+                      border-radius: 24px !important;
+                      {% if on %}
+                      background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                      border-color: rgba(167, 139, 250, 0.5) !important;
+                      box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                      --secondary-text-color: rgba(255, 255, 255, 0.82);
+                      {% endif %}
+                    }
+                span: 6
+                uid: status-heater-power
+                optional: true
+              - type: custom:glasshome-heating-card
+                section: schedule
+                compact: true
+                span: 12
+                entity: "[[heating.climate]]"
+                current: "[[heating.current]]"
+                target: "[[heating.target]]"
+                boiler: "[[heating.boiler]]"
+                boost: "[[heating.boost]]"
+                hub: "[[?heating.hub]]"
+                battery: "[[?heating.battery]]"
+                schedule: "[[heating.schedule]]"
+                control: "[[heating.control]]"
+                comfort: "[[heating.comfort]]"
+                eco: "[[heating.eco]]"
+                title: "[[?heating.title]]"
+                feature: heating_hive
+                setup_label: Hive heating
+              - type: custom:glasshome-heating-card
+                section: insights
+                compact: true
+                span: 12
+                entity: "[[heating.climate]]"
+                current: "[[heating.current]]"
+                target: "[[heating.target]]"
+                boiler: "[[heating.boiler]]"
+                boost: "[[heating.boost]]"
+                hub: "[[?heating.hub]]"
+                battery: "[[?heating.battery]]"
+                schedule: "[[heating.schedule]]"
+                control: "[[heating.control]]"
+                comfort: "[[heating.comfort]]"
+                eco: "[[heating.eco]]"
+                title: "[[?heating.title]]"
+                feature: heating_hive
+                setup_label: Hive heating
+            feature: climate
+          - id: devices
+            title: Plan
+            icon: mdi:floor-plan
+            accent: "#a78bfa"
+            cards:
+              - type: custom:glasshome-house-card
+                span: 12
+                plan_key: glasshome_floorplan
+              - type: custom:glasshome-nav-card
+                variant: links
+                links:
+                  - name: Rooms list
+                    icon: mdi:view-grid-outline
+                    path: /glass-home/rooms
+                span: 12
+            feature: floorplan
+          - id: energy
+            title: Energy
+            icon: mdi:lightning-bolt
+            accent: "#a78bfa"
+            cards:
+              - type: custom:glasshome-energy-card
+                section: overview
+                span: 12
+                electricity: "[[energy.electricity]]"
+                gas: "[[?energy.gas]]"
+                appliances: "[[?energy.appliances]]"
+                setup_label: Energy
+              - type: custom:glasshome-energy-card
+                section: detail
+                span: 12
+                electricity: "[[energy.electricity]]"
+                gas: "[[?energy.gas]]"
+                appliances: "[[?energy.appliances]]"
+                setup_label: Energy
+            feature: energy
+  - title: House
+    path: house
+    type: sections
+    max_columns: 2
+    theme: glasshome
+    dense_section_placement: false
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: markdown
+            content: |-
+              # Floor plan
+              Tap a device, or Edit layout to rearrange
+            card_mod:
+              style:
+                .: |
+                  ha-card { background: none; box-shadow: none; border: none; }
+                ha-markdown$: |
+                  h1 { font-size: clamp(25px, 7.2vw, 34px); font-weight: 700; letter-spacing: -0.5px; margin: 0; color: #ffffff; }
+                  p { font-size: clamp(14px, 4.1vw, 17px); color: #98989f; margin: 4px 0 0; }
+            grid_options:
+              columns: 18
+          - type: custom:glasshome-nav-card
+            variant: links
+            links:
+              - name: Rooms list
+                icon: mdi:view-grid-outline
+                path: /glass-home/rooms
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            feature: floorplan
+            card:
+              type: custom:glasshome-house-card
+              plan_key: glasshome_floorplan
+          - type: custom:glasshome-nav-card
+            variant: bar
+            active: devices
+            grid_options:
+              columns: full
+    icon: mdi:floor-plan
+  - title: Rooms
+    path: rooms
+    type: sections
+    max_columns: 2
+    theme: glasshome
+    dense_section_placement: false
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: markdown
+              content: |-
+                {%- set w = '[[weather.entity]]' -%}
+                **{{ now().strftime('%H:%M') }}** · {{ now().strftime('%a') }} {{ now().day }} {{ now().strftime('%b') }} · {{ state_attr(w, 'temperature') | round(0) | int }}° outside · {% if '[[?presence.person]]' %}{{ state_attr('[[?presence.person]]', 'friendly_name') }} {{ 'home' if is_state('[[?presence.person]]', 'home') else 'away' }}{% endif %}
+              card_mod:
+                style:
+                  .: |
+                    ha-card { background: none; box-shadow: none; border: none; }
+                  ha-markdown$: |
+                    p { margin: 0; font-size: 16px; color: #98989f; }
+                    strong { color: #ffffff; font-weight: 600; }
+          - type: markdown
+            content: |-
+              # Rooms
+              Every device, room by room
+            card_mod:
+              style:
+                .: |
+                  ha-card { background: none; box-shadow: none; border: none; }
+                ha-markdown$: |
+                  h1 { font-size: clamp(25px, 7.2vw, 34px); font-weight: 700; letter-spacing: -0.5px; margin: 0; color: #ffffff; }
+                  p { font-size: clamp(14px, 4.1vw, 17px); color: #98989f; margin: 4px 0 0; }
+            grid_options:
+              columns: 18
+          - type: custom:glasshome-nav-card
+            variant: links
+            links:
+              - name: Floor plan
+                icon: mdi:floor-plan
+                path: /glass-home/house
+                feature: floorplan
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            setup_label: Rooms
+            card:
+              type: custom:glasshome-rooms-card
+              rooms: "[[rooms]]"
+          - type: custom:glasshome-nav-card
+            variant: bar
+            active: devices
+            grid_options:
+              columns: full
+    icon: mdi:view-grid-outline
+    subview: true
+    back_path: /glass-home/house
+  - title: Security
+    path: security
+    type: sections
+    max_columns: 2
+    theme: glasshome
+    dense_section_placement: false
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 16
+            card:
+              type: markdown
+              content: |-
+                {%- set cams = [[cctv.cameras|json]] -%}
+                {%- set up = cams | map(attribute='entity') | reject('is_state', 'unavailable') | reject('is_state', 'unknown') | list | count -%}
+                # Security
+                <ha-icon icon="{{ 'mdi:check-circle' if up == cams | count else 'mdi:alert-circle' }}"></ha-icon> **{{ up }}/{{ cams | count }}** cameras online
+              card_mod:
+                style:
+                  .: |
+                    ha-card { background: none; box-shadow: none; border: none; }
+                  ha-markdown$: |
+                    h1 { font-size: clamp(25px, 7.2vw, 34px); font-weight: 700; letter-spacing: -0.5px; margin: 0; color: #ffffff; }
+                    p { font-size: clamp(14px, 4.1vw, 17px); color: #98989f; margin: 4px 0 0; }
+                    ha-icon { --mdc-icon-size: 18px; vertical-align: -2px; }
+                    ha-icon[icon="mdi:check-circle"] { color: #30d158; }
+                    ha-icon[icon="mdi:close-circle"] { color: #ff453a; }
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            setup_label: Cameras
+            card:
+              type: custom:glasshome-camera-card
+              cameras: "[[cctv.cameras]]"
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 12
+            card:
+              type: tile
+              entity: "[[presence.person]]"
+              color: green
+              state_content:
+                - state
+                - last_changed
+              card_mod:
+                style: |
+                  {% set e = config.entity %}
+                  {% set d = e.split('.')[0] %}
+                  {% set s = states(e) %}
+                  {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                        and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                  ha-card {
+                    border-radius: 24px !important;
+                    {% if on %}
+                    background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                    border-color: rgba(167, 139, 250, 0.5) !important;
+                    box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                    --secondary-text-color: rgba(255, 255, 255, 0.82);
+                    {% endif %}
+                  }
+              optional: true
+          - type: custom:glasshome-nav-card
+            variant: bar
+            active: security
+            grid_options:
+              columns: full
+    icon: mdi:shield-home
+  - title: Laundry
+    path: laundry
+    type: sections
+    max_columns: 2
+    theme: glasshome
+    dense_section_placement: false
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: markdown
+            content: |-
+              # Washing machine
+              Washing machine · via SmartThings
+            card_mod:
+              style:
+                .: |
+                  ha-card { background: none; box-shadow: none; border: none; }
+                ha-markdown$: |
+                  h1 { font-size: clamp(25px, 7.2vw, 34px); font-weight: 700; letter-spacing: -0.5px; margin: 0; color: #ffffff; }
+                  p { font-size: clamp(14px, 4.1vw, 17px); color: #98989f; margin: 4px 0 0; }
+            grid_options:
+              columns: 18
+          - type: custom:glasshome-nav-card
+            variant: links
+            links:
+              - name: Home
+                icon: mdi:arrow-left
+                path: /glass-home/home#home
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: custom:glasshome-laundry-card
+              name: Washing machine
+              machine: "[[laundry.machine_state]]"
+              job: "[[laundry.job_state]]"
+              energy: "[[laundry.energy]]"
+              water: "[[laundry.water_consumption]]"
+              temperature: "[[laundry.water_temperature]]"
+              spin: "[[laundry.spin_level]]"
+              rinses: "[[laundry.rinse_cycles]]"
+              current: "[[laundry.current_cycle]]"
+              logs:
+                - "[[laundry.log.0]]"
+                - "[[laundry.log.1]]"
+                - "[[laundry.log.2]]"
+              completion: "[[laundry.completion_time]]"
+              power: "[[laundry.power]]"
+              finished: "[[laundry.finished]]"
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: custom:glasshome-washer-card
+              section: settings
+              machine: "[[laundry.machine_state]]"
+              job: "[[laundry.job_state]]"
+              energy: "[[laundry.energy]]"
+              water: "[[laundry.water_consumption]]"
+              temperature: "[[laundry.water_temperature]]"
+              spin: "[[laundry.spin_level]]"
+              rinses: "[[laundry.rinse_cycles]]"
+              current: "[[laundry.current_cycle]]"
+              logs:
+                - "[[laundry.log.0]]"
+                - "[[laundry.log.1]]"
+                - "[[laundry.log.2]]"
+              operation: "[[laundry.course]]"
+              bubble: "[[laundry.bubble_soak]]"
+              remote: "[[laundry.remote_control]]"
+              child_lock: "[[laundry.child_lock]]"
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: custom:glasshome-washer-card
+              section: usage
+              machine: "[[laundry.machine_state]]"
+              job: "[[laundry.job_state]]"
+              energy: "[[laundry.energy]]"
+              water: "[[laundry.water_consumption]]"
+              temperature: "[[laundry.water_temperature]]"
+              spin: "[[laundry.spin_level]]"
+              rinses: "[[laundry.rinse_cycles]]"
+              current: "[[laundry.current_cycle]]"
+              logs:
+                - "[[laundry.log.0]]"
+                - "[[laundry.log.1]]"
+                - "[[laundry.log.2]]"
+              rate: "[[?energy.electricity.rate]]"
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: custom:glasshome-washer-card
+              section: insights
+              machine: "[[laundry.machine_state]]"
+              job: "[[laundry.job_state]]"
+              energy: "[[laundry.energy]]"
+              water: "[[laundry.water_consumption]]"
+              temperature: "[[laundry.water_temperature]]"
+              spin: "[[laundry.spin_level]]"
+              rinses: "[[laundry.rinse_cycles]]"
+              current: "[[laundry.current_cycle]]"
+              logs:
+                - "[[laundry.log.0]]"
+                - "[[laundry.log.1]]"
+                - "[[laundry.log.2]]"
+              counter: counter.laundry_washes_completed
+              counter_since: 3 Nov
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: custom:glasshome-washer-card
+              section: history
+              machine: "[[laundry.machine_state]]"
+              job: "[[laundry.job_state]]"
+              energy: "[[laundry.energy]]"
+              water: "[[laundry.water_consumption]]"
+              temperature: "[[laundry.water_temperature]]"
+              spin: "[[laundry.spin_level]]"
+              rinses: "[[laundry.rinse_cycles]]"
+              current: "[[laundry.current_cycle]]"
+              logs:
+                - "[[laundry.log.0]]"
+                - "[[laundry.log.1]]"
+                - "[[laundry.log.2]]"
+          - type: custom:glasshome-nav-card
+            variant: bar
+            active: home
+            grid_options:
+              columns: full
+    subview: true
+    back_path: /glass-home/home
+  - title: Climate
+    path: climate
+    type: sections
+    max_columns: 2
+    theme: glasshome
+    dense_section_placement: false
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: markdown
+              content: |-
+                # Climate
+                {{ states('[[climate.thermostat]]') | replace('_', ' ') | title }} · {{ state_attr('[[climate.thermostat]]', 'current_temperature') }}° indoors
+              card_mod:
+                style:
+                  .: |
+                    ha-card { background: none; box-shadow: none; border: none; }
+                  ha-markdown$: |
+                    h1 { font-size: clamp(25px, 7.2vw, 34px); font-weight: 700; letter-spacing: -0.5px; margin: 0; color: #ffffff; }
+                    p { font-size: clamp(14px, 4.1vw, 17px); color: #98989f; margin: 4px 0 0; }
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: thermostat
+              entity: "[[climate.thermostat]]"
+              features:
+                - type: climate-hvac-modes
+                  hvac_modes:
+                    - auto
+                    - heat
+                    - off
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            feature: heating_hive
+            card:
+              type: custom:glasshome-schedule-card
+              entity: "[[heating.schedule]]"
+              on_entity: "[[heating.comfort]]"
+              off_entity: "[[heating.eco]]"
+              control: "[[heating.control]]"
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 6
+            feature: heating_hive
+            card:
+              type: tile
+              entity: "[[heating.control]]"
+              name: Use schedule
+              icon: mdi:calendar-check
+              color: green
+              icon_tap_action:
+                action: toggle
+              card_mod:
+                style: |
+                  {% set e = config.entity %}
+                  {% set d = e.split('.')[0] %}
+                  {% set s = states(e) %}
+                  {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                        and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                  ha-card {
+                    border-radius: 24px !important;
+                    {% if on %}
+                    background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                    border-color: rgba(167, 139, 250, 0.5) !important;
+                    box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                    --secondary-text-color: rgba(255, 255, 255, 0.82);
+                    {% endif %}
+                  }
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 6
+            feature: heating_hive
+            card:
+              type: tile
+              entity: "[[heating.comfort]]"
+              name: Comfort
+              icon: mdi:sofa
+              color: orange
+              card_mod:
+                style: |
+                  {% set e = config.entity %}
+                  {% set d = e.split('.')[0] %}
+                  {% set s = states(e) %}
+                  {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                        and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                  ha-card {
+                    border-radius: 24px !important;
+                    {% if on %}
+                    background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                    border-color: rgba(167, 139, 250, 0.5) !important;
+                    box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                    --secondary-text-color: rgba(255, 255, 255, 0.82);
+                    {% endif %}
+                  }
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 6
+            feature: heating_hive
+            card:
+              type: tile
+              entity: "[[heating.eco]]"
+              name: Eco
+              icon: mdi:leaf
+              color: green
+              card_mod:
+                style: |
+                  {% set e = config.entity %}
+                  {% set d = e.split('.')[0] %}
+                  {% set s = states(e) %}
+                  {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                        and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                  ha-card {
+                    border-radius: 24px !important;
+                    {% if on %}
+                    background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                    border-color: rgba(167, 139, 250, 0.5) !important;
+                    box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                    --secondary-text-color: rgba(255, 255, 255, 0.82);
+                    {% endif %}
+                  }
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 6
+            feature: heating_hive
+            card:
+              type: tile
+              entity: "[[heating.schedule]]"
+              name: Edit times
+              icon: mdi:calendar-edit
+              color: orange
+              hide_state: true
+              tap_action:
+                action: more-info
+              card_mod:
+                style: |
+                  {% set e = config.entity %}
+                  {% set d = e.split('.')[0] %}
+                  {% set s = states(e) %}
+                  {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                        and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                  ha-card {
+                    border-radius: 24px !important;
+                    {% if on %}
+                    background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                    border-color: rgba(167, 139, 250, 0.5) !important;
+                    box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                    --secondary-text-color: rgba(255, 255, 255, 0.82);
+                    {% endif %}
+                  }
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 8
+            card:
+              type: tile
+              entity: "[[climate.temperature]]"
+              name: Indoor
+              icon: mdi:home-thermometer
+              color: orange
+              card_mod:
+                style: |
+                  {% set e = config.entity %}
+                  {% set d = e.split('.')[0] %}
+                  {% set s = states(e) %}
+                  {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                        and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                  ha-card {
+                    border-radius: 24px !important;
+                    {% if on %}
+                    background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                    border-color: rgba(167, 139, 250, 0.5) !important;
+                    box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                    --secondary-text-color: rgba(255, 255, 255, 0.82);
+                    {% endif %}
+                  }
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 8
+            card:
+              type: tile
+              entity: "[[weather.entity]]"
+              name: Outside
+              color: blue
+              state_content:
+                - temperature
+                - state
+              card_mod:
+                style: |
+                  {% set e = config.entity %}
+                  {% set d = e.split('.')[0] %}
+                  {% set s = states(e) %}
+                  {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                        and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                  ha-card {
+                    border-radius: 24px !important;
+                    {% if on %}
+                    background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                    border-color: rgba(167, 139, 250, 0.5) !important;
+                    box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                    --secondary-text-color: rgba(255, 255, 255, 0.82);
+                    {% endif %}
+                  }
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 8
+            feature: heating_hive
+            card:
+              type: tile
+              entity: "[[heating.boiler]]"
+              name: Boiler demand
+              icon: mdi:fire
+              color: deep-orange
+              card_mod:
+                style: |
+                  {% set e = config.entity %}
+                  {% set d = e.split('.')[0] %}
+                  {% set s = states(e) %}
+                  {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                        and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                  ha-card {
+                    border-radius: 24px !important;
+                    {% if on %}
+                    background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                    border-color: rgba(167, 139, 250, 0.5) !important;
+                    box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                    --secondary-text-color: rgba(255, 255, 255, 0.82);
+                    {% endif %}
+                  }
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 6
+            card:
+              type: tile
+              entity: "[[climate.heater.switch]]"
+              name: Heater
+              icon: mdi:radiator
+              color: deep-orange
+              icon_tap_action:
+                action: toggle
+              card_mod:
+                style: |
+                  {% set e = config.entity %}
+                  {% set d = e.split('.')[0] %}
+                  {% set s = states(e) %}
+                  {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                        and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                  ha-card {
+                    border-radius: 24px !important;
+                    {% if on %}
+                    background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                    border-color: rgba(167, 139, 250, 0.5) !important;
+                    box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                    --secondary-text-color: rgba(255, 255, 255, 0.82);
+                    {% endif %}
+                  }
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 6
+            card:
+              type: tile
+              entity: "[[climate.heater.power]]"
+              name: Heater W
+              icon: mdi:flash
+              color: yellow
+              card_mod:
+                style: |
+                  {% set e = config.entity %}
+                  {% set d = e.split('.')[0] %}
+                  {% set s = states(e) %}
+                  {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                        and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                  ha-card {
+                    border-radius: 24px !important;
+                    {% if on %}
+                    background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                    border-color: rgba(167, 139, 250, 0.5) !important;
+                    box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                    --secondary-text-color: rgba(255, 255, 255, 0.82);
+                    {% endif %}
+                  }
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 6
+            card:
+              type: tile
+              entity: "[[climate.heater.today]]"
+              name: Heater today
+              icon: mdi:lightning-bolt
+              color: yellow
+              card_mod:
+                style: |
+                  {% set e = config.entity %}
+                  {% set d = e.split('.')[0] %}
+                  {% set s = states(e) %}
+                  {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                        and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                  ha-card {
+                    border-radius: 24px !important;
+                    {% if on %}
+                    background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                    border-color: rgba(167, 139, 250, 0.5) !important;
+                    box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                    --secondary-text-color: rgba(255, 255, 255, 0.82);
+                    {% endif %}
+                  }
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 6
+            card:
+              type: tile
+              entity: "[[climate.heater.month]]"
+              name: Heater month
+              icon: mdi:calendar-month
+              color: yellow
+              card_mod:
+                style: |
+                  {% set e = config.entity %}
+                  {% set d = e.split('.')[0] %}
+                  {% set s = states(e) %}
+                  {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                        and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                  ha-card {
+                    border-radius: 24px !important;
+                    {% if on %}
+                    background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                    border-color: rgba(167, 139, 250, 0.5) !important;
+                    box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                    --secondary-text-color: rgba(255, 255, 255, 0.82);
+                    {% endif %}
+                  }
+              optional: true
+          - type: custom:glasshome-nav-card
+            variant: bar
+            active: climate
+            grid_options:
+              columns: full
+    icon: mdi:thermometer
+  - title: Lights
+    path: lights
+    type: sections
+    max_columns: 2
+    theme: glasshome
+    dense_section_placement: false
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 12
+            card:
+              type: markdown
+              content: |-
+                {%- set all = [[?lighting.all|json]] -%}
+                {%- set n = all | select('is_state', 'on') | list | count -%}
+                # Lights
+                **{{ n }} of {{ all | count }}** on
+              card_mod:
+                style:
+                  .: |
+                    ha-card { background: none; box-shadow: none; border: none; }
+                  ha-markdown$: |
+                    h1 { font-size: clamp(25px, 7.2vw, 34px); font-weight: 700; letter-spacing: -0.5px; margin: 0; color: #ffffff; }
+                    p { font-size: clamp(14px, 4.1vw, 17px); color: #98989f; margin: 4px 0 0; }
+          - type: button
+            name: Edit scenes
+            icon: mdi:pencil
+            show_state: false
+            tap_action:
+              action: navigate
+              navigation_path: /glass-home/lights-scenes
+            card_mod:
+              style: |
+                ha-card { --mdc-icon-size: 30px; font-size: 15px; font-weight: 600; }
+            grid_options:
+              columns: 6
+              rows: 2
+          - type: button
+            name: Schedules
+            icon: mdi:clock-outline
+            show_state: false
+            tap_action:
+              action: navigate
+              navigation_path: /glass-home/lights-schedules
+            card_mod:
+              style: |
+                ha-card { --mdc-icon-size: 30px; font-size: 15px; font-weight: 600; }
+            grid_options:
+              columns: 6
+              rows: 2
+          - type: heading
+            heading: Scenes · hold a scene to edit it
+            heading_style: title
+            icon: mdi:palette
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 4
+              rows: 2
+            card:
+              type: button
+              name: Bright
+              icon: mdi:white-balance-sunny
+              show_state: false
+              tap_action:
+                action: perform-action
+                perform_action: scene.turn_on
+                target:
+                  entity_id: "[[scenes.bright]]"
+              card_mod:
+                style: |
+                  ha-card { --mdc-icon-size: 30px; font-size: 15px; font-weight: 600; }
+              hold_action:
+                action: navigate
+                navigation_path: /config/scene/dashboard
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 4
+              rows: 2
+            card:
+              type: button
+              name: Relax
+              icon: mdi:sofa-outline
+              show_state: false
+              tap_action:
+                action: perform-action
+                perform_action: scene.turn_on
+                target:
+                  entity_id: "[[scenes.relax]]"
+              card_mod:
+                style: |
+                  ha-card { --mdc-icon-size: 30px; font-size: 15px; font-weight: 600; }
+              hold_action:
+                action: navigate
+                navigation_path: /config/scene/dashboard
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 4
+              rows: 2
+            card:
+              type: button
+              name: Evening
+              icon: mdi:weather-sunset
+              show_state: false
+              tap_action:
+                action: perform-action
+                perform_action: scene.turn_on
+                target:
+                  entity_id: "[[scenes.evening]]"
+              card_mod:
+                style: |
+                  ha-card { --mdc-icon-size: 30px; font-size: 15px; font-weight: 600; }
+              hold_action:
+                action: navigate
+                navigation_path: /config/scene/dashboard
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 4
+              rows: 2
+            card:
+              type: button
+              name: Night
+              icon: mdi:weather-night
+              show_state: false
+              tap_action:
+                action: perform-action
+                perform_action: scene.turn_on
+                target:
+                  entity_id: "[[scenes.night]]"
+              card_mod:
+                style: |
+                  ha-card { --mdc-icon-size: 30px; font-size: 15px; font-weight: 600; }
+              hold_action:
+                action: navigate
+                navigation_path: /config/scene/dashboard
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 4
+              rows: 2
+            card:
+              type: button
+              name: Film
+              icon: mdi:movie-open-outline
+              show_state: false
+              tap_action:
+                action: perform-action
+                perform_action: scene.turn_on
+                target:
+                  entity_id: "[[scenes.film]]"
+              card_mod:
+                style: |
+                  ha-card { --mdc-icon-size: 30px; font-size: 15px; font-weight: 600; }
+              hold_action:
+                action: navigate
+                navigation_path: /config/scene/dashboard
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 4
+              rows: 2
+            card:
+              type: button
+              name: All off
+              icon: mdi:lightbulb-group-off-outline
+              show_state: false
+              tap_action:
+                action: perform-action
+                perform_action: scene.turn_on
+                target:
+                  entity_id: "[[scenes.all_off]]"
+              card_mod:
+                style: |
+                  ha-card { --mdc-icon-size: 30px; font-size: 15px; font-weight: 600; }
+              hold_action:
+                action: navigate
+                navigation_path: /config/scene/dashboard
+              optional: true
+          - type: heading
+            heading: Rooms
+            heading_style: title
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            setup_label: Lights
+            card:
+              type: custom:glasshome-rooms-card
+              rooms: "[[rooms]]"
+              use: lights
+          - type: custom:glasshome-nav-card
+            variant: bar
+            active: lights
+            grid_options:
+              columns: full
+    icon: mdi:lightbulb-group
+  - title: Scenes
+    path: lights-scenes
+    type: sections
+    max_columns: 2
+    theme: glasshome
+    dense_section_placement: false
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: markdown
+            content: |-
+              # Scenes
+              Tap a scene to run it · Edit sets each light's brightness and colour
+            card_mod:
+              style:
+                .: |
+                  ha-card { background: none; box-shadow: none; border: none; }
+                ha-markdown$: |
+                  h1 { font-size: clamp(25px, 7.2vw, 34px); font-weight: 700; letter-spacing: -0.5px; margin: 0; color: #ffffff; }
+                  p { font-size: clamp(14px, 4.1vw, 17px); color: #98989f; margin: 4px 0 0; }
+            grid_options:
+              columns: 18
+          - type: custom:glasshome-nav-card
+            variant: links
+            links:
+              - name: Back to Lights
+                icon: mdi:arrow-left
+                path: /glass-home/lights
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: horizontal-stack
+              cards:
+                - type: tile
+                  entity: "[[scenes.bright]]"
+                  name: Bright
+                  icon: mdi:white-balance-sunny
+                  color: amber
+                  state_content:
+                    - last_changed
+                  tap_action:
+                    action: perform-action
+                    perform_action: scene.turn_on
+                    target:
+                      entity_id: "[[scenes.bright]]"
+                  card_mod:
+                    style: |
+                      {% set e = config.entity %}
+                      {% set d = e.split('.')[0] %}
+                      {% set s = states(e) %}
+                      {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                            and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                      ha-card {
+                        border-radius: 24px !important;
+                        {% if on %}
+                        background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                        border-color: rgba(167, 139, 250, 0.5) !important;
+                        box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                        --secondary-text-color: rgba(255, 255, 255, 0.82);
+                        {% endif %}
+                      }
+                - type: button
+                  name: Edit
+                  icon: mdi:pencil
+                  show_state: false
+                  tap_action:
+                    action: navigate
+                    navigation_path: /config/scene/dashboard
+                  card_mod:
+                    style: |
+                      ha-card { flex-direction: row !important; justify-content: center; align-items: center; gap: 10px; padding: 0 12px !important; font-size: 16px; font-weight: 600; }
+                      ha-state-icon { width: 26px !important; height: 26px !important; --mdc-icon-size: 26px; flex: none; }
+                      ha-card { height: 56px; }
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: horizontal-stack
+              cards:
+                - type: tile
+                  entity: "[[scenes.relax]]"
+                  name: Relax
+                  icon: mdi:sofa-outline
+                  color: amber
+                  state_content:
+                    - last_changed
+                  tap_action:
+                    action: perform-action
+                    perform_action: scene.turn_on
+                    target:
+                      entity_id: "[[scenes.relax]]"
+                  card_mod:
+                    style: |
+                      {% set e = config.entity %}
+                      {% set d = e.split('.')[0] %}
+                      {% set s = states(e) %}
+                      {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                            and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                      ha-card {
+                        border-radius: 24px !important;
+                        {% if on %}
+                        background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                        border-color: rgba(167, 139, 250, 0.5) !important;
+                        box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                        --secondary-text-color: rgba(255, 255, 255, 0.82);
+                        {% endif %}
+                      }
+                - type: button
+                  name: Edit
+                  icon: mdi:pencil
+                  show_state: false
+                  tap_action:
+                    action: navigate
+                    navigation_path: /config/scene/dashboard
+                  card_mod:
+                    style: |
+                      ha-card { flex-direction: row !important; justify-content: center; align-items: center; gap: 10px; padding: 0 12px !important; font-size: 16px; font-weight: 600; }
+                      ha-state-icon { width: 26px !important; height: 26px !important; --mdc-icon-size: 26px; flex: none; }
+                      ha-card { height: 56px; }
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: horizontal-stack
+              cards:
+                - type: tile
+                  entity: "[[scenes.evening]]"
+                  name: Evening
+                  icon: mdi:weather-sunset
+                  color: amber
+                  state_content:
+                    - last_changed
+                  tap_action:
+                    action: perform-action
+                    perform_action: scene.turn_on
+                    target:
+                      entity_id: "[[scenes.evening]]"
+                  card_mod:
+                    style: |
+                      {% set e = config.entity %}
+                      {% set d = e.split('.')[0] %}
+                      {% set s = states(e) %}
+                      {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                            and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                      ha-card {
+                        border-radius: 24px !important;
+                        {% if on %}
+                        background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                        border-color: rgba(167, 139, 250, 0.5) !important;
+                        box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                        --secondary-text-color: rgba(255, 255, 255, 0.82);
+                        {% endif %}
+                      }
+                - type: button
+                  name: Edit
+                  icon: mdi:pencil
+                  show_state: false
+                  tap_action:
+                    action: navigate
+                    navigation_path: /config/scene/dashboard
+                  card_mod:
+                    style: |
+                      ha-card { flex-direction: row !important; justify-content: center; align-items: center; gap: 10px; padding: 0 12px !important; font-size: 16px; font-weight: 600; }
+                      ha-state-icon { width: 26px !important; height: 26px !important; --mdc-icon-size: 26px; flex: none; }
+                      ha-card { height: 56px; }
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: horizontal-stack
+              cards:
+                - type: tile
+                  entity: "[[scenes.night]]"
+                  name: Night
+                  icon: mdi:weather-night
+                  color: amber
+                  state_content:
+                    - last_changed
+                  tap_action:
+                    action: perform-action
+                    perform_action: scene.turn_on
+                    target:
+                      entity_id: "[[scenes.night]]"
+                  card_mod:
+                    style: |
+                      {% set e = config.entity %}
+                      {% set d = e.split('.')[0] %}
+                      {% set s = states(e) %}
+                      {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                            and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                      ha-card {
+                        border-radius: 24px !important;
+                        {% if on %}
+                        background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                        border-color: rgba(167, 139, 250, 0.5) !important;
+                        box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                        --secondary-text-color: rgba(255, 255, 255, 0.82);
+                        {% endif %}
+                      }
+                - type: button
+                  name: Edit
+                  icon: mdi:pencil
+                  show_state: false
+                  tap_action:
+                    action: navigate
+                    navigation_path: /config/scene/dashboard
+                  card_mod:
+                    style: |
+                      ha-card { flex-direction: row !important; justify-content: center; align-items: center; gap: 10px; padding: 0 12px !important; font-size: 16px; font-weight: 600; }
+                      ha-state-icon { width: 26px !important; height: 26px !important; --mdc-icon-size: 26px; flex: none; }
+                      ha-card { height: 56px; }
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: horizontal-stack
+              cards:
+                - type: tile
+                  entity: "[[scenes.film]]"
+                  name: Film
+                  icon: mdi:movie-open-outline
+                  color: amber
+                  state_content:
+                    - last_changed
+                  tap_action:
+                    action: perform-action
+                    perform_action: scene.turn_on
+                    target:
+                      entity_id: "[[scenes.film]]"
+                  card_mod:
+                    style: |
+                      {% set e = config.entity %}
+                      {% set d = e.split('.')[0] %}
+                      {% set s = states(e) %}
+                      {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                            and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                      ha-card {
+                        border-radius: 24px !important;
+                        {% if on %}
+                        background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                        border-color: rgba(167, 139, 250, 0.5) !important;
+                        box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                        --secondary-text-color: rgba(255, 255, 255, 0.82);
+                        {% endif %}
+                      }
+                - type: button
+                  name: Edit
+                  icon: mdi:pencil
+                  show_state: false
+                  tap_action:
+                    action: navigate
+                    navigation_path: /config/scene/dashboard
+                  card_mod:
+                    style: |
+                      ha-card { flex-direction: row !important; justify-content: center; align-items: center; gap: 10px; padding: 0 12px !important; font-size: 16px; font-weight: 600; }
+                      ha-state-icon { width: 26px !important; height: 26px !important; --mdc-icon-size: 26px; flex: none; }
+                      ha-card { height: 56px; }
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: horizontal-stack
+              cards:
+                - type: tile
+                  entity: "[[scenes.all_off]]"
+                  name: All off
+                  icon: mdi:lightbulb-group-off-outline
+                  color: amber
+                  state_content:
+                    - last_changed
+                  tap_action:
+                    action: perform-action
+                    perform_action: scene.turn_on
+                    target:
+                      entity_id: "[[scenes.all_off]]"
+                  card_mod:
+                    style: |
+                      {% set e = config.entity %}
+                      {% set d = e.split('.')[0] %}
+                      {% set s = states(e) %}
+                      {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                            and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                      ha-card {
+                        border-radius: 24px !important;
+                        {% if on %}
+                        background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                        border-color: rgba(167, 139, 250, 0.5) !important;
+                        box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                        --secondary-text-color: rgba(255, 255, 255, 0.82);
+                        {% endif %}
+                      }
+                - type: button
+                  name: Edit
+                  icon: mdi:pencil
+                  show_state: false
+                  tap_action:
+                    action: navigate
+                    navigation_path: /config/scene/dashboard
+                  card_mod:
+                    style: |
+                      ha-card { flex-direction: row !important; justify-content: center; align-items: center; gap: 10px; padding: 0 12px !important; font-size: 16px; font-weight: 600; }
+                      ha-state-icon { width: 26px !important; height: 26px !important; --mdc-icon-size: 26px; flex: none; }
+                      ha-card { height: 56px; }
+              optional: true
+          - type: button
+            name: New scene
+            icon: mdi:plus
+            show_state: false
+            tap_action:
+              action: navigate
+              navigation_path: /config/scene/edit/new
+            card_mod:
+              style: |
+                ha-card { flex-direction: row !important; justify-content: center; align-items: center; gap: 6px; padding: 0 10px !important; font-size: 14px; font-weight: 600; height: 44px !important; margin-top: 8px; }
+                ha-state-icon { width: 20px !important; height: 20px !important; --mdc-icon-size: 20px; flex: none; }
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: custom:glasshome-nav-card
+            variant: links
+            links:
+              - name: All scenes
+                icon: mdi:palette-outline
+                path: /config/scene/dashboard
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: markdown
+            content: "**How editing works:** the editor switches the scene on so you can see it. Tap each light to set it on or off, its brightness and its colour or warmth, then Save. Use the tablet's back gesture to return here."
+            card_mod:
+              style:
+                .: |
+                  ha-card { padding: 4px 6px; border-radius: 24px !important; }
+                ha-markdown$: |
+                  p { margin: 6px 0; font-size: 16px; line-height: 1.45; color: #98989f; }
+                  strong { color: #ffffff; }
+                  ha-icon { --mdc-icon-size: 20px; margin-right: 8px; vertical-align: -3px; color: #98989f; }
+                  ha-icon[icon="mdi:check-circle"] { color: #30d158; }
+                  ha-icon[icon="mdi:alert-circle"], ha-icon[icon="mdi:cctv-off"] { color: #ff9f0a; }
+            grid_options:
+              columns: full
+          - type: custom:glasshome-nav-card
+            variant: bar
+            active: lights
+            grid_options:
+              columns: full
+    subview: true
+    back_path: /glass-home/lights
+  - title: Schedules
+    path: lights-schedules
+    type: sections
+    max_columns: 2
+    theme: glasshome
+    dense_section_placement: false
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: markdown
+            content: |-
+              # Schedules
+              Automatic on and off times for your lights
+            card_mod:
+              style:
+                .: |
+                  ha-card { background: none; box-shadow: none; border: none; }
+                ha-markdown$: |
+                  h1 { font-size: clamp(25px, 7.2vw, 34px); font-weight: 700; letter-spacing: -0.5px; margin: 0; color: #ffffff; }
+                  p { font-size: clamp(14px, 4.1vw, 17px); color: #98989f; margin: 4px 0 0; }
+            grid_options:
+              columns: 18
+          - type: custom:glasshome-nav-card
+            variant: links
+            links:
+              - name: Back to Lights
+                icon: mdi:arrow-left
+                path: /glass-home/lights
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: markdown
+              content: |-
+                {%- set autos = states.automation | list -%}
+                {%- if autos -%}
+                {%- for a in autos | sort(attribute='name') -%}
+                <ha-icon icon="{{ 'mdi:clock-check-outline' if a.state == 'on' else 'mdi:clock-remove-outline' }}"></ha-icon>**{{ a.name }}** · {{ 'Active' if a.state == 'on' else 'Paused' }} · {{ ('last ran ' ~ relative_time(a.attributes.last_triggered) ~ ' ago') if a.attributes.last_triggered else 'not run yet' }}
+
+                {%- endfor -%}
+                {%- else -%}
+                <ha-icon icon="mdi:clock-outline"></ha-icon>**No schedules yet.** Nothing in Home Assistant turns these lights on or off automatically.
+
+                Tap **New schedule**, choose a time (or sunset) as the trigger and a light as the action, for example *at 18:00 turn on Living Room Light at 60%* or *at 23:30 turn off Hallway Light*.
+                {%- endif -%}
+              card_mod:
+                style:
+                  .: |
+                    ha-card { padding: 8px 6px; }
+                  ha-markdown$: |
+                    p { margin: 6px 0; font-size: 16px; line-height: 1.45; color: #98989f; }
+                    strong { color: #ffffff; }
+                    ha-icon { --mdc-icon-size: 20px; margin-right: 8px; vertical-align: -3px; color: #98989f; }
+                    ha-icon[icon="mdi:check-circle"] { color: #30d158; }
+                    ha-icon[icon="mdi:alert-circle"], ha-icon[icon="mdi:cctv-off"] { color: #ff9f0a; }
+                    ha-icon[icon="mdi:clock-check-outline"] { color: #30d158; }
+              demo: false
+          - type: button
+            name: New schedule
+            icon: mdi:plus
+            show_state: false
+            tap_action:
+              action: navigate
+              navigation_path: /config/automation/edit/new
+            card_mod:
+              style: |
+                ha-card { flex-direction: row !important; justify-content: center; align-items: center; gap: 6px; padding: 0 10px !important; font-size: 14px; font-weight: 600; height: 44px !important; margin-top: 8px; }
+                ha-state-icon { width: 20px !important; height: 20px !important; --mdc-icon-size: 20px; flex: none; }
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: custom:glasshome-nav-card
+            variant: links
+            links:
+              - name: Edit schedules
+                icon: mdi:pencil
+                path: /config/automation/dashboard
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: custom:glasshome-nav-card
+            variant: bar
+            active: lights
+            grid_options:
+              columns: full
+    subview: true
+    back_path: /glass-home/lights
+  - title: Media
+    path: media
+    type: sections
+    max_columns: 2
+    theme: glasshome
+    dense_section_placement: false
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: markdown
+              content: |-
+                {%- set w = '[[weather.entity]]' -%}
+                **{{ now().strftime('%H:%M') }}** · {{ now().strftime('%a') }} {{ now().day }} {{ now().strftime('%b') }} · {{ state_attr(w, 'temperature') | round(0) | int }}° outside · {% if '[[?presence.person]]' %}{{ state_attr('[[?presence.person]]', 'friendly_name') }} {{ 'home' if is_state('[[?presence.person]]', 'home') else 'away' }}{% endif %}
+              card_mod:
+                style:
+                  .: |
+                    ha-card { background: none; box-shadow: none; border: none; }
+                  ha-markdown$: |
+                    p { margin: 0; font-size: 16px; color: #98989f; }
+                    strong { color: #ffffff; font-weight: 600; }
+              optional: true
+          - type: markdown
+            content: |-
+              # Media
+              TV
+            card_mod:
+              style:
+                .: |
+                  ha-card { background: none; box-shadow: none; border: none; }
+                ha-markdown$: |
+                  h1 { font-size: clamp(25px, 7.2vw, 34px); font-weight: 700; letter-spacing: -0.5px; margin: 0; color: #ffffff; }
+                  p { font-size: clamp(14px, 4.1vw, 17px); color: #98989f; margin: 4px 0 0; }
+            grid_options:
+              columns: full
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: full
+            card:
+              type: media-control
+              entity: "[[media.tv]]"
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 6
+              rows: 2
+            card:
+              type: button
+              name: Volume −
+              icon: mdi:volume-minus
+              show_state: false
+              tap_action:
+                action: perform-action
+                perform_action: media_player.volume_down
+                target:
+                  entity_id: "[[media.tv_cast]]"
+              card_mod:
+                style: |
+                  ha-card { --mdc-icon-size: 30px; font-size: 15px; font-weight: 600; }
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 6
+              rows: 2
+            card:
+              type: button
+              name: Volume +
+              icon: mdi:volume-plus
+              show_state: false
+              tap_action:
+                action: perform-action
+                perform_action: media_player.volume_up
+                target:
+                  entity_id: "[[media.tv_cast]]"
+              card_mod:
+                style: |
+                  ha-card { --mdc-icon-size: 30px; font-size: 15px; font-weight: 600; }
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 6
+              rows: 2
+            feature: tv_power
+            card:
+              type: custom:glasshome-tv-power-card
+              name: Power
+              remote: "[[media.tv_remote]]"
+              script: "[[media.tv_power_script]]"
+              icon_only: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 6
+              rows: 2
+            card:
+              type: button
+              name: More
+              icon: mdi:dots-horizontal
+              show_state: false
+              entity: "[[media.tv]]"
+              tap_action:
+                action: more-info
+              card_mod:
+                style: |
+                  ha-card { --mdc-icon-size: 30px; font-size: 15px; font-weight: 600; }
+              optional: true
+          - type: heading
+            heading: Set the mood
+            heading_style: title
+            icon: mdi:palette
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 24
+            card:
+              type: tile
+              entity: "[[lighting.lights.1]]"
+              icon: mdi:led-strip-variant
+              color: purple
+              icon_tap_action:
+                action: toggle
+              card_mod:
+                style: |
+                  {% set e = config.entity %}
+                  {% set d = e.split('.')[0] %}
+                  {% set s = states(e) %}
+                  {% set on = d not in ['scene', 'person', 'sensor', 'update', 'weather', 'camera', 'binary_sensor', 'select', 'number', 'input_number', 'schedule']
+                        and s not in ['off', 'idle', 'standby', 'unavailable', 'unknown', 'not_home'] %}
+                  ha-card {
+                    border-radius: 24px !important;
+                    {% if on %}
+                    background: linear-gradient(155deg, rgba(139, 92, 246, 0.55) 0%, rgba(109, 40, 217, 0.28) 60%, rgba(26, 20, 46, 0.7) 100%) !important;
+                    border-color: rgba(167, 139, 250, 0.5) !important;
+                    box-shadow: 0 0 22px rgba(139, 92, 246, 0.28) !important;
+                    --secondary-text-color: rgba(255, 255, 255, 0.82);
+                    {% endif %}
+                  }
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 12
+              rows: 2
+            card:
+              type: button
+              name: Film 20%
+              icon: mdi:movie-open-outline
+              show_state: false
+              tap_action:
+                action: perform-action
+                perform_action: light.turn_on
+                target:
+                  entity_id: "[[lighting.lights.0]]"
+                data:
+                  brightness_pct: 20
+                  color_temp_kelvin: 2700
+              card_mod:
+                style: |
+                  ha-card { --mdc-icon-size: 30px; font-size: 15px; font-weight: 600; }
+              optional: true
+          - type: custom:glasshome-slot-card
+            grid_options:
+              columns: 12
+              rows: 2
+            card:
+              type: button
+              name: Lights up
+              icon: mdi:brightness-7
+              show_state: false
+              tap_action:
+                action: perform-action
+                perform_action: light.turn_on
+                target:
+                  entity_id: "[[lighting.lights.0]]"
+                data:
+                  brightness_pct: 100
+                  color_temp_kelvin: 4000
+              card_mod:
+                style: |
+                  ha-card { --mdc-icon-size: 30px; font-size: 15px; font-weight: 600; }
+              optional: true
+          - type: custom:glasshome-nav-card
+            variant: bar
+            active: media
+            grid_options:
+              columns: full
+    icon: mdi:television-play
+    feature: media|spotify|music
+  - title: News
+    path: news
+    type: panel
+    subview: true
+    back_path: /glass-home/home#home
+    theme: glasshome
+    icon: mdi:newspaper-variant-outline
+    cards:
+      - type: custom:glasshome-slot-card
+        card:
+          type: custom:glasshome-news-card
+          todo: "[[news.todo]]"
+  - title: Welcome
+    path: welcome
+    icon: mdi:hand-wave-outline
+    type: panel
+    subview: true
+    back_path: /glass-home/home
+    theme: glasshome
+    cards:
+      - type: custom:glasshome-wizard-card
+  - title: Settings
+    path: settings
+    icon: mdi:cog-outline
+    type: panel
+    subview: true
+    back_path: /glass-home/home
+    theme: glasshome
+    cards:
+      - type: custom:glasshome-settings-card
+  - title: Setup
+    path: setup
+    icon: mdi:progress-wrench
+    type: sections
+    max_columns: 2
+    theme: glasshome
+    subview: true
+    back_path: /glass-home/home
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:glasshome-onboarding-card
+            grid_options:
+              columns: full
+          - type: custom:glasshome-nav-card
+            variant: links
+            links:
+              - name: Home
+                icon: mdi:arrow-left
+                path: /glass-home/home#home
+            grid_options:
+              columns: full

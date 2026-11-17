@@ -1,0 +1,8 @@
+fetch:
+  fields:
+    url:
+      required: true
+      example: "https://feeds.bbci.co.uk/news/rss.xml"
+      selector:
+        text:
+          type: url

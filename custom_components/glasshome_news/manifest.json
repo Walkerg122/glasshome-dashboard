@@ -1,0 +1,11 @@
+{
+  "domain": "glasshome_news",
+  "name": "Glass Home News",
+  "codeowners": [],
+  "config_flow": true,
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "1.0.0"
+}

@@ -1,0 +1,74 @@
+# Glass Home: TV power with Wake-on-LAN (features.tv_power in the dashboard's glasshome: settings).
+# For Android / Google TVs set up with the Android TV Remote integration. In standby many TVs drop off
+# the network, so "on" first sends a Wake-on-LAN packet, waits for the TV to come back, then asks it
+# to power on. "off" puts it in standby.
+#
+# Put this file in /config/packages/ (see docs/install.md for the one-time configuration.yaml line).
+# CHANGE ME: replace remote.living_room_tv with your TV's remote entity (also media.tv_remote in the config).
+# Your TV's MAC address and your network's broadcast address go in /config/secrets.yaml, never here:
+#   glasshome_tv_mac: "AA:BB:CC:DD:EE:FF"
+#   glasshome_tv_broadcast: "192.0.2.255"     # usually your network address with .255 at the end
+# Enable "Wake on LAN" / "Network standby" in the TV's own settings too.
+
+wake_on_lan:
+
+script:
+  glasshome_tv_power:
+    alias: Glass Home TV power
+    icon: mdi:power
+    mode: single
+    max_exceeded: silent
+    fields:
+      action:
+        description: on, off or toggle
+        example: toggle
+    variables:
+      tv: remote.living_room_tv
+      mac: !secret glasshome_tv_mac
+      broadcast: !secret glasshome_tv_broadcast
+    sequence:
+      - variables:
+          was: "{{ states(tv) }}"
+          want: >-
+            {% set a = (action | default('toggle') | string | lower) %}
+            {{ a if a in ['on', 'off'] else ('off' if was == 'on' else 'on') }}
+      - if:
+          - condition: template
+            value_template: "{{ want == 'off' }}"
+        then:
+          - if:
+              - condition: template
+                value_template: "{{ is_state(tv, 'on') }}"
+            then:
+              - action: remote.turn_off
+                target:
+                  entity_id: "{{ tv }}"
+                continue_on_error: true
+              - wait_template: "{{ not is_state(tv, 'on') }}"
+                timeout: "00:00:15"
+        else:
+          - if:
+              - condition: template
+                value_template: "{{ not is_state(tv, 'on') }}"
+            then:
+              - repeat:
+                  count: 3
+                  sequence:
+                    - action: wake_on_lan.send_magic_packet
+                      data:
+                        mac: "{{ mac }}"
+                        broadcast_address: "{{ broadcast }}"
+                      continue_on_error: true
+                    - delay: "00:00:01"
+              - wait_template: "{{ states(tv) not in ['unavailable', 'unknown'] }}"
+                timeout: "00:00:25"
+              - if:
+                  - condition: template
+                    value_template: "{{ not is_state(tv, 'on') }}"
+                then:
+                  - action: remote.turn_on
+                    target:
+                      entity_id: "{{ tv }}"
+                    continue_on_error: true
+                  - wait_template: "{{ is_state(tv, 'on') }}"
+                    timeout: "00:00:20"

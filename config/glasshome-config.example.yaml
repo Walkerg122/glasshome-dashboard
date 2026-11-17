@@ -1,0 +1,204 @@
+# Glass Home settings: copy this file to /config/glasshome/config.yaml (next to dashboard.yaml) and change
+# it to match your home. The dashboard includes it with `glasshome: !include config.yaml`.
+#
+# Where it lives matters: /config/glasshome is NOT served to the web. The cards read these settings over
+# your signed-in Home Assistant connection, so only people who can log in to your Home Assistant can see
+# them. Never copy this file into /config/www (that folder is public).
+#
+# Only entity ids and display text go here: no passwords, tokens, API keys, IP or MAC addresses.
+# Every value below is a fictional example. Sections you do not use can be deleted. A card whose
+# settings are missing shows a "Set up" box; a feature switched off in `features` disappears completely.
+# After editing, reload the dashboard. The Setup page (/glass-home/setup) shows what is still missing.
+# You do not have to write this by hand: the setup wizard and the Settings page (/glass-home/settings) write
+# these settings for you in a dashboard made in the UI, and give you this YAML for a YAML-file dashboard.
+
+# demo: true          # show a fictional home instead (nothing is sent to your devices); remove when ready
+
+# setup: { complete: false }   # opens the welcome screen and the setup wizard (the wizard writes complete: true)
+
+household:
+  greeting: Sam               # "Good evening, Sam"
+  name: The Smiths            # the home's name; the greeting uses it when there is no greeting ("Evening, The Smiths")
+  timezone: Europe/London     # clock, dates and bin days; default: the device's own zone
+  locale: en-GB               # date and time format; default: the browser's language
+  clock: 24                   # 24 or 12
+  # show_greeting: false      # hide the greeting
+  # temperature_unit: "°C"    # "°C" or "°F", for the built-in weather
+  # distance_unit: km         # km or mi
+
+# true / false switches. Anything not listed keeps its default (shown here).
+features:
+  weather: true
+  lighting: true
+  climate: true
+  news: true            # needs the Glass Home News integration (custom_components/glasshome_news)
+  presence: false
+  heating_hive: false   # Hive heating control centre (else: Home Assistant's own thermostat card)
+  energy: false         # Octopus Energy integration (HACS)
+  media: false
+  spotify: false
+  tv_power: false       # needs packages/glasshome_tv_power.yaml
+  cctv: false
+  laundry: false        # SmartThings washer + packages/glasshome_laundry.yaml
+  bins: false
+  floorplan: false
+
+weather:
+  entity: weather.forecast_home
+# Or the built-in weather from Open-Meteo (no account or key). Pick the place in Settings; the browser sends
+# only the place, rounded to about 1 km, to open-meteo.com:
+# weather:
+#   provider: open_meteo
+#   entity: weather.glasshome_forecast
+#   place: { name: Testville, latitude: 12.35, longitude: -45.68 }   # glasshome-validate: allow
+
+# Starred devices from the setup (shown first), and dashboard-only names, icons or hiding:
+# favourites: [light.living_room]
+# devices:
+#   light.living_room: { name: Big light, icon: "mdi:ceiling-light" }
+#   sensor.garden_temperature: { hidden: true }
+
+# Lights and plugs. `lights` are the favourites on the Home and Lights pages (up to 4); `power` (same
+# order, optional, use null to skip one) are the plugs' live power sensors; `all` is what "All on/off"
+# switches; `status_only` are lights shown but never switched (e.g. run by another app's timer).
+lighting:
+  all: [light.living_room, light.hallway, switch.kitchen_led_strip]
+  lights: [light.living_room, switch.tv_led_strip, light.hallway, switch.kitchen_led_strip]
+  power: [null, sensor.tv_led_strip_power, null, sensor.kitchen_led_strip_power]
+  status_only: []
+
+# Rooms: the Rooms page shows every entity; the Lights page shows `lights`. The first three rooms also get
+# a room switch on the Lights page.
+rooms:
+  - name: Living Room
+    icon: mdi:sofa-outline
+    lights: [light.living_room, switch.tv_led_strip]
+    entities: [light.living_room, switch.tv_led_strip, media_player.living_room_tv]
+  - name: Hallway
+    icon: mdi:door
+    lights: [light.hallway]
+    entities: [light.hallway, sensor.hallway_temperature]
+  - name: Kitchen
+    icon: mdi:silverware-fork-knife
+    lights: [switch.kitchen_led_strip]
+    entities: [switch.kitchen_led_strip]
+
+# Scene buttons (any you leave out are hidden)
+scenes:
+  bright: scene.bright
+  relax: scene.relax
+  evening: scene.evening
+  night: scene.night
+  film: scene.film
+  all_off: scene.all_off
+
+climate:
+  thermostat: climate.living_room
+  temperature: sensor.hallway_temperature        # optional indoor temperature sensor
+  # heater: { switch: switch.plug_in_heater, power: sensor.heater_power, today: sensor.heater_energy_today, month: sensor.heater_energy_month }
+
+# Only with features.heating_hive (Hive integration + packages/glasshome_heating.yaml)
+heating:
+  title: Thermostat
+  climate: climate.living_room
+  current: sensor.living_room_current_temperature
+  target: sensor.living_room_target_temperature
+  boiler: binary_sensor.living_room_state
+  boost: binary_sensor.living_room_boost
+  hub: binary_sensor.hive_hub_status
+  battery: sensor.living_room_battery_level
+  schedule: schedule.heating_schedule
+  control: automation.heating_schedule_control
+  comfort: input_number.heating_comfort
+  eco: input_number.heating_eco
+
+presence:
+  person: person.alex
+
+news:
+  todo: todo.glasshome_news                      # Local To-do list for saved stories
+  # categories: [top, uk, world, business, technology, sport, science, entertainment]
+  # custom:
+  #   - { id: local, name: Local, icon: "mdi:map-marker", feeds: ["https://example.com/news/rss"] }
+
+media:
+  tv: media_player.living_room_tv                # the TV (state and volume)
+  tv_cast: media_player.living_room_tv_cast      # the player used for volume buttons (often the same TV)
+  tv_remote: remote.living_room_tv               # Android TV Remote (TV power)
+  tv_power_script: script.glasshome_tv_power
+  spotify: media_player.spotify_alex
+  spotify_device: Living Room TV                 # Spotify Connect device name to play on
+  spotify_device_label: Living room speakers
+  spotify_device_note: Through the TV
+
+cctv:
+  cameras:
+    - { entity: camera.front_door, name: Front door }
+    - { entity: camera.garden, name: Garden }
+
+# Octopus Energy integration (BottlecapDave, HACS). Copy the ids from Settings > Entities. They include
+# your meter's serial number, which is one reason this file must stay out of /config/www and out of git.
+energy:
+  electricity:
+    demand: sensor.octopus_energy_electricity_METER_current_demand
+    today_kwh: sensor.octopus_energy_electricity_METER_current_accumulative_consumption
+    today_cost: sensor.octopus_energy_electricity_METER_current_accumulative_cost
+    rate: sensor.octopus_energy_electricity_METER_current_rate
+    standing: sensor.octopus_energy_electricity_METER_current_standing_charge
+    stat_kwh: octopus_energy:electricity_METER_previous_accumulative_consumption
+    stat_cost: octopus_energy:electricity_METER_previous_accumulative_cost
+  gas:
+    today_kwh: sensor.octopus_energy_gas_METER_current_accumulative_consumption_kwh
+    today_cost: sensor.octopus_energy_gas_METER_current_accumulative_cost
+    rate: sensor.octopus_energy_gas_METER_current_rate
+    standing: sensor.octopus_energy_gas_METER_current_standing_charge
+    stat_kwh: octopus_energy:gas_METER_previous_accumulative_consumption_kwh
+    stat_cost: octopus_energy:gas_METER_previous_accumulative_cost
+  appliances:
+    - { name: Heater, icon: "mdi:radiator", power: sensor.heater_power, today: sensor.heater_energy_today, month: sensor.heater_energy_month }
+
+# SmartThings washer named "Washing machine" (see packages/glasshome_laundry.yaml)
+laundry:
+  machine_state: sensor.washing_machine_machine_state
+  job_state: sensor.washing_machine_job_state
+  completion_time: sensor.washing_machine_completion_time
+  power: sensor.washing_machine_power
+  energy: sensor.washing_machine_energy
+  water_consumption: sensor.washing_machine_water_consumption
+  course: select.washing_machine
+  spin_level: select.washing_machine_spin_level
+  water_temperature: select.washing_machine_water_temperature
+  rinse_cycles: number.washing_machine_rinse_cycles
+  bubble_soak: switch.washing_machine_bubble_soak
+  child_lock: binary_sensor.washing_machine_child_lock
+  remote_control: binary_sensor.washing_machine_remote_control
+  current_cycle: input_text.laundry_current_cycle
+  finished: input_boolean.laundry_finished
+  log: [input_text.laundry_wash_log_1, input_text.laundry_wash_log_2, input_text.laundry_wash_log_3]
+
+# Bin collections: a repeating rotation and/or exact dates (exact dates win). Colours: blue, grey,
+# brown, green, or define your own in `types`.
+bins:
+  rotation: { start: "2026-01-06", every_days: 7, pattern: [[grey], [blue, green]], weeks: 104 }
+  # schedule: { "2026-12-29": [grey] }
+  # reminder_hour: 18
+  # types:
+  #   purple: { name: Purple bin, short: Purple, waste: Glass, main: "#8b5cf6", dark: "#5b21b6", lid: "#6d28d9", glow: "139,92,246" }
+
+# Floor plan: without `arch` a fictional sample plan is shown. See docs/floorplan.md.
+floorplan:
+  # arch: { ground: { name: GROUND FLOOR, outline: [...], rooms: [...], walls: [...], windows: [...], sliders: [], doors: [...], stairs: {...} } }
+  status_only: []
+
+# navigation:
+#   pages: [{ id: home, title: Home, icon: "mdi:home-outline" }, ...]
+
+# Homepage on narrow screens: reflow (default) keeps cards full size and scrolls; scale shrinks the whole
+# page to fit, for wall tablets that should never scroll.
+# layout: { fit: reflow }
+
+# The page the dashboard opens on, and the Settings button at the end of the bar (on by default):
+# navigation: { home: home, settings: true }
+
+# Background: aurora (default) or plain
+# appearance: { background: aurora }

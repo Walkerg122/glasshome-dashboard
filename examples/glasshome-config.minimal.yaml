@@ -1,0 +1,15 @@
+# The smallest useful Glass Home settings: weather, two lights, one room and a thermostat.
+# Copy to /config/glasshome/config.yaml and change the entity ids to your own.
+household:
+  name: ""
+features:
+  news: false
+weather:
+  entity: weather.forecast_home
+lighting:
+  all: [light.living_room, light.kitchen]
+  lights: [light.living_room, light.kitchen]
+rooms:
+  - { name: Living Room, icon: "mdi:sofa-outline", lights: [light.living_room], entities: [light.living_room] }
+climate:
+  thermostat: climate.living_room

@@ -1,0 +1,182 @@
+# Glass Home: laundry tracking for a SmartThings washing machine (features.laundry in the dashboard's glasshome: settings).
+# Put this file in /config/packages/ (see glasshome_heating.yaml for the one-time configuration.yaml line).
+#
+# CHANGE ME: the washer's entities below are named for a SmartThings device called "Washing machine"
+# (sensor.washing_machine_job_state, select.washing_machine_spin_level, ...). If yours has another name,
+# replace "washing_machine" with your device's prefix throughout this file and in the dashboard's glasshome: settings.
+# CHANGE ME: notify.notify sends the "washing has finished" message to every notify target; replace it
+# with your phone's notify service (for example notify.mobile_app_<your_phone>).
+
+input_text:
+  laundry_current_cycle:
+    name: Laundry current cycle
+    max: 255
+  laundry_wash_log_1:
+    name: Laundry wash log 1
+    max: 255
+  laundry_wash_log_2:
+    name: Laundry wash log 2
+    max: 255
+  laundry_wash_log_3:
+    name: Laundry wash log 3
+    max: 255
+
+input_boolean:
+  laundry_finished:
+    name: Laundry finished
+    icon: mdi:washing-machine-alert
+
+counter:
+  laundry_washes_completed:
+    name: Washes completed
+    icon: mdi:counter
+
+automation:
+  - id: glasshome_laundry_cycle_started
+    alias: "Laundry: wash started"
+    description: When the washing machine starts a wash (its stage leaves Ready/Finished), remember the start time and the energy and water meter readings in input_text.laundry_current_cycle, and clear the Finished flag. Part of Glass Home.
+    triggers:
+      - trigger: state
+        entity_id: sensor.washing_machine_job_state
+        from:
+          - none
+          - finish
+        not_to:
+          - none
+          - finish
+          - unavailable
+          - unknown
+    conditions: []
+    actions:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.laundry_finished
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.laundry_current_cycle
+        data:
+          value: "{% set bad = ['none', 'unknown', 'unavailable', ''] %}{% set v = namespace(o=[]) %}{% for e in ['select.washing_machine_water_temperature', 'select.washing_machine_spin_level', 'number.washing_machine_rinse_cycles'] %}{% set s = states(e) %}{% set v.o = v.o + [(s | replace('.0', '')) if s not in bad else '-'] %}{% endfor %}{{ now().timestamp() | int }}|{{ states('sensor.washing_machine_energy') }}|{{ states('sensor.washing_machine_water_consumption') }}|{{ v.o | join('|') }}|{{ 1 if is_state('switch.washing_machine_bubble_soak', 'on') else 0 }}"
+    mode: single
+  - id: glasshome_laundry_cycle_settings
+    alias: "Laundry: note wash settings"
+    description: SmartThings often reports the temperature, spin and rinses a few minutes into a wash. While a wash is running, keep the latest real values in input_text.laundry_current_cycle (blank and none readings are ignored). Part of Glass Home.
+    triggers:
+      - trigger: state
+        entity_id:
+          - select.washing_machine_water_temperature
+          - select.washing_machine_spin_level
+          - number.washing_machine_rinse_cycles
+          - switch.washing_machine_bubble_soak
+    conditions:
+      - condition: template
+        value_template: "{{ states('input_text.laundry_current_cycle').split('|') | count == 7 }}"
+    actions:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.laundry_current_cycle
+        data:
+          value: "{% set bad = ['none', 'unknown', 'unavailable', ''] %}{% set p = states('input_text.laundry_current_cycle').split('|') %}{% set t = states('select.washing_machine_water_temperature') %}{% set s = states('select.washing_machine_spin_level') %}{% set r = states('number.washing_machine_rinse_cycles') | replace('.0', '') %}{% set b = states('switch.washing_machine_bubble_soak') %}{{ p[0] }}|{{ p[1] }}|{{ p[2] }}|{{ t if t not in bad else p[3] }}|{{ s if s not in bad else p[4] }}|{{ r if r not in bad else p[5] }}|{{ (1 if b == 'on' else 0) if b in ['on', 'off'] else p[6] }}"
+    mode: queued
+  - id: glasshome_laundry_cycle_finished
+    alias: "Laundry: wash finished"
+    description: "When a wash finishes (stage Finished) set input_boolean.laundry_finished, count it and send one phone notification. A wash that ends without finishing is logged as stopped, with no notification. Three minutes later, once SmartThings has sent the final meter readings, the wash is added to the wash log (input_text.laundry_wash_log_1..3, newest first: start, minutes, temperature, spin, rinses, bubble soak, kWh, litres, f=finished / x=stopped). Part of Glass Home."
+    triggers:
+      - trigger: state
+        entity_id: sensor.washing_machine_job_state
+        to: finish
+        id: finish
+      - trigger: state
+        entity_id: sensor.washing_machine_job_state
+        to: none
+        not_from:
+          - finish
+          - none
+          - unavailable
+          - unknown
+        id: stopped
+    conditions:
+      - condition: template
+        value_template: "{{ states('input_text.laundry_current_cycle').split('|') | count == 7 }}"
+    actions:
+      - variables:
+          start: "{{ states('input_text.laundry_current_cycle').split('|')[0] | int(0) }}"
+          end: "{{ now().timestamp() | int }}"
+          done: "{{ trigger.id == 'finish' }}"
+      - if:
+          - condition: template
+            value_template: "{{ done }}"
+        then:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.laundry_finished
+          - action: counter.increment
+            target:
+              entity_id: counter.laundry_washes_completed
+          - action: notify.notify
+            data:
+              title: Washing machine
+              message: The washing has finished{{ ' after ' ~ ((end - start) // 60) ~ ' min' if start else '' }}. Ready to unload.
+              data:
+                tag: glasshome-laundry-finished
+                group: laundry
+      - delay:
+          minutes: 3
+      - variables:
+          record: "{% set p = states('input_text.laundry_current_cycle').split('|') %}{% set e = states('sensor.washing_machine_energy') %}{% set w = states('sensor.washing_machine_water_consumption') %}{% set kwh = ([e | float - p[1] | float, 0] | max) | round(1) if is_number(e) and is_number(p[1]) else '-' %}{% set lit = ([w | float - p[2] | float, 0] | max) | round(1) if is_number(w) and is_number(p[2]) else '-' %}{{ start }},{{ ((end - start) / 60) | round(0) | int }},{{ p[3] }},{{ p[4] }},{{ p[5] }},{{ p[6] }},{{ kwh }},{{ lit }},{{ 'f' if done else 'x' }}"
+          packed: "{% set old = (states('input_text.laundry_wash_log_1') ~ ';' ~ states('input_text.laundry_wash_log_2') ~ ';' ~ states('input_text.laundry_wash_log_3')).split(';') | select('search', ',') | list %}{% set ns = namespace(b0='', b1='', b2='', i=0) %}{% for r in [record] + old %}{% if ns.i == 0 %}{% set n = (ns.b0 ~ ';' ~ r) if ns.b0 else r %}{% if n | length <= 255 %}{% set ns.b0 = n %}{% else %}{% set ns.i = 1 %}{% endif %}{% endif %}{% if ns.i == 1 %}{% set n = (ns.b1 ~ ';' ~ r) if ns.b1 else r %}{% if n | length <= 255 %}{% set ns.b1 = n %}{% else %}{% set ns.i = 2 %}{% endif %}{% endif %}{% if ns.i == 2 %}{% set n = (ns.b2 ~ ';' ~ r) if ns.b2 else r %}{% if n | length <= 255 %}{% set ns.b2 = n %}{% else %}{% set ns.i = 3 %}{% endif %}{% endif %}{% endfor %}{{ ns.b0 }}#{{ ns.b1 }}#{{ ns.b2 }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.laundry_wash_log_1
+        data:
+          value: "{{ packed.split('#')[0] }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.laundry_wash_log_2
+        data:
+          value: "{{ packed.split('#')[1] }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.laundry_wash_log_3
+        data:
+          value: "{{ packed.split('#')[2] }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.laundry_current_cycle
+        data:
+          value: ""
+    mode: single
+    max_exceeded: silent
+  - id: glasshome_laundry_offline
+    alias: "Laundry: SmartThings not reporting"
+    description: If the washing machine's SmartThings entities stay unavailable for 10 minutes, show a Home Assistant notification; remove it as soon as they report again. The Laundry page shows the same warning. Part of Glass Home.
+    triggers:
+      - trigger: state
+        entity_id: sensor.washing_machine_job_state
+        to: unavailable
+        for:
+          minutes: 10
+        id: offline
+      - trigger: state
+        entity_id: sensor.washing_machine_job_state
+        from: unavailable
+        id: back
+    conditions: []
+    actions:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: offline
+            sequence:
+              - action: persistent_notification.create
+                data:
+                  notification_id: glasshome_laundry_offline
+                  title: Washing machine not reporting
+                  message: SmartThings has not sent the washing machine's status for 10 minutes. Check the machine's Wi-Fi and the SmartThings app.
+          - conditions:
+              - condition: trigger
+                id: back
+            sequence:
+              - action: persistent_notification.dismiss
+                data:
+                  notification_id: glasshome_laundry_offline
+    mode: single

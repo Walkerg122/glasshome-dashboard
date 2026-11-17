@@ -1,0 +1,76 @@
+# --- Your own Glass Home settings (never commit) ---
+# (they belong in /config/glasshome/config.yaml in Home Assistant, never in /config/www)
+glasshome/config.yaml
+glasshome-config.yaml
+glasshome-config.js
+.glasshome-private-terms.txt
+# settings exported from Settings > Advanced list your devices and weather place
+glasshome-settings.json
+glasshome-settings.yaml
+glasshome-settings*.json
+
+# --- Home Assistant files that must never be published ---
+secrets.yaml
+.storage/
+.cloud/
+.HA_VERSION
+home-assistant_v2.db*
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.log
+*.log.*
+home-assistant.log*
+backups/
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+known_devices.yaml
+ip_bans.yaml
+zigbee.db*
+deps/
+tts/
+
+# --- Credentials and environment ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+id_rsa*
+id_ed25519*
+
+# --- Camera media, captures and backups of any kind ---
+snapshots/
+recordings/
+*.mp4
+*.mkv
+*.har
+*.bak
+*.bak-*
+*.orig
+*-backup*.json
+cookies*.txt
+
+# --- Private working folders ---
+public-release-private/
+private/
+*.private.*
+
+# --- Tooling ---
+node_modules/
+__pycache__/
+.pytest_cache/
+*.pyc
+.venv/
+dist/
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+.claude/

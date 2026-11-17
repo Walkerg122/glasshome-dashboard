@@ -1,0 +1,25 @@
+# Glass Home: lines to merge into /config/configuration.yaml. Only what you need:
+#   - frontend: themes    always, unless your themes are already loaded from /config/themes
+#   - homeassistant: packages    only if you copied glasshome_*.yaml packages
+#   - lovelace: dashboards    only for install method B (YAML files); method A needs no change here
+# If you already have a `homeassistant:`, `frontend:` or `lovelace:` section, add these keys to it
+# instead of creating a second one (duplicate top-level keys are an error).
+
+homeassistant:
+  # loads every file in /config/packages (the glasshome_*.yaml packages you copied)
+  packages: !include_dir_named packages
+
+frontend:
+  themes: !include_dir_merge_named themes
+
+lovelace:
+  # keep your existing dashboards in the UI; resources added in the UI keep working
+  mode: storage
+  dashboards:
+    glass-home:                       # the URL: http://<your-home-assistant>:8123/glass-home
+      mode: yaml
+      filename: glasshome/dashboard.yaml   # includes glasshome/config.yaml (your settings, not web-served)
+      title: Glass Home
+      icon: mdi:home-variant-outline
+      show_in_sidebar: true
+      require_admin: false

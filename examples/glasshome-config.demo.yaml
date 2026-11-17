@@ -1,0 +1,4 @@
+# Try Glass Home before configuring it: a fictional home with demo lights, climate, energy, cameras and
+# laundry. The demo entities exist only in your browser tab; nothing is sent to your real devices.
+# Copy to /config/glasshome/config.yaml. Replace it with your own settings when you are ready.
+demo: true

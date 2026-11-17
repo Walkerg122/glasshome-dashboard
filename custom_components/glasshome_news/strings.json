@@ -1,0 +1,25 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Glass Home News",
+        "description": "Lets the Glass Home dashboard fetch public news feeds. Only public https addresses can be fetched; local and private network addresses are always refused."
+      }
+    },
+    "abort": {
+      "already_configured": "Glass Home News is already set up."
+    }
+  },
+  "services": {
+    "fetch": {
+      "name": "Fetch feed",
+      "description": "Fetches a public https news feed for the Glass Home dashboard. Local and private network addresses are refused.",
+      "fields": {
+        "url": {
+          "name": "URL",
+          "description": "The feed address (https only)."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,75 @@
+# Glass Home: heating schedule for a Hive thermostat (features.heating_hive in the dashboard's glasshome: settings).
+# Put this file in /config/packages/ and add to configuration.yaml:
+#   homeassistant:
+#     packages: !include_dir_named packages
+#
+# CHANGE ME: replace climate.thermostat below with your Hive climate entity.
+# ALSO: create a Schedule helper in Settings > Devices & services > Helpers > Create helper > Schedule,
+# named "Heating schedule" (entity id schedule.heating_schedule). It is created in the UI rather than here
+# so that its times stay editable from the dashboard. Each period can carry its own temperature as data; between periods the eco
+# temperature applies. The automation keeps the Hive in Heat (manual) so the Hive app schedule does
+# not interfere, and re-applies the schedule when a boost ends.
+
+input_number:
+  heating_comfort:
+    name: Heating comfort temperature
+    min: 5
+    max: 30
+    step: 0.5
+    unit_of_measurement: "°C"
+    icon: mdi:sofa-outline
+  heating_eco:
+    name: Heating eco temperature
+    min: 5
+    max: 30
+    step: 0.5
+    unit_of_measurement: "°C"
+    icon: mdi:leaf
+
+automation:
+  - id: glasshome_heating_schedule
+    alias: Heating schedule control
+    description: "Runs the Hive thermostat from the Home Assistant heating schedule (schedule.heating_schedule): each period sets its own temperature (falling back to the comfort temperature) and the eco temperature applies between periods. Keeps the Hive in Heat (manual) so the Hive app schedule does not interfere. Re-applies the schedule when a boost ends. Part of Glass Home."
+    triggers:
+      - trigger: state
+        entity_id: schedule.heating_schedule
+      - trigger: state
+        entity_id:
+          - input_number.heating_comfort
+          - input_number.heating_eco
+      - trigger: state
+        entity_id: climate.thermostat
+        attribute: preset_mode
+        from: boost
+      - trigger: homeassistant
+        event: start
+    conditions:
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: climate.thermostat
+            attribute: preset_mode
+            state: boost
+    actions:
+      - variables:
+          target: "{% if is_state('schedule.heating_schedule', 'on') %}{{ state_attr('schedule.heating_schedule', 'temperature') | float(states('input_number.heating_comfort') | float(20)) }}{% else %}{{ states('input_number.heating_eco') | float(16) }}{% endif %}"
+      - if:
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: climate.thermostat
+                state: heat
+        then:
+          - action: climate.set_hvac_mode
+            target:
+              entity_id: climate.thermostat
+            data:
+              hvac_mode: heat
+          - delay:
+              seconds: 3
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.thermostat
+        data:
+          temperature: "{{ target }}"
+    mode: restart
