@@ -32,6 +32,10 @@ const SAFE_MAC = /^(AA:BB:CC:DD:EE:FF|00:00:00:00:00:00|FF:FF:FF:FF:FF:FF)$/i;
 const SAFE_EMAIL = /@(example\.(com|org|net)|users\.noreply\.github\.com)$|^(noreply|no-reply)@/i;
 const DEMO_PEOPLE = new Set(["person.alex", "person.sam", "person.demo"]);
 const SKIP_DIRS = new Set([".git", "node_modules", "dist", "public-release-private"]);
+// Generated test and tool caches. Never published, so the working-tree walk skips them; they hold copies of test
+// data (pytest stores every parametrised test id, including fictional addresses) that would otherwise show up as
+// findings. Files git tracks are always scanned, even inside these folders (see git ls-files below).
+const CACHE_DIRS = new Set(["__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".hypothesis", ".tox", ".nox", ".venv", "venv", "htmlcov"]);
 const TEXT_EXT = new Set([".js", ".py", ".mjs", ".cjs", ".ts", ".json", ".yaml", ".yml", ".md", ".txt", ".csv", ".html", ".css", ".svg", ".env", ".example", ".ini", ".conf", ""]);
 const IMAGE_EXT = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp"]);
 
@@ -107,20 +111,33 @@ function scanText(label, text) {
   });
 }
 
+const skippedCaches = [];
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
     if (SKIP_DIRS.has(name)) continue;
     const p = join(dir, name), st = statSync(p);
-    if (st.isDirectory()) walk(p, out); else out.push(p);
+    if (st.isDirectory()) {
+      if (CACHE_DIRS.has(name)) { skippedCaches.push(relative(ROOT, p).split("\\").join("/")); continue; }
+      walk(p, out);
+    } else out.push(p);
   }
   return out;
 }
 
 const git = (...a) => execFileSync("git", a, { cwd: ROOT, encoding: "utf8", maxBuffer: 512 * 1024 * 1024, stdio: ["ignore", "pipe", "ignore"] });
 const isRepo = existsSync(join(ROOT, ".git"));
+// git check-ignore never reports a tracked file, so a committed file is scanned even if .gitignore matches it
 const ignored = (rel) => { if (!isRepo) return false; try { git("check-ignore", "-q", rel); return true; } catch { return false; } };
 
 const files = walk(ROOT);
+// Every file git tracks is scanned, wherever it is (also inside skipped or cache folders): those get published.
+if (isRepo) {
+  const seen = new Set(files.map((f) => resolve(f)));
+  for (const rel of git("ls-files", "-z").split("\0").filter(Boolean)) {
+    const p = resolve(ROOT, rel);
+    if (!seen.has(p) && existsSync(p) && statSync(p).isFile()) { files.push(p); seen.add(p); }
+  }
+}
 const images = [];
 for (const file of files) {
   const rel = relative(ROOT, file).split("\\").join("/");
@@ -171,6 +188,7 @@ if (HISTORY) {
 // ---------------------------------------------------------------- report
 const uniq = [...new Map(findings.map((f) => [`${f.where}|${f.rule}|${f.value}`, f])).values()];
 console.log(`Glass Home validate: ${files.length} files scanned${HISTORY ? " + git history" : ""}, ${terms.size} private terms.`);
+if (skippedCaches.length) console.log(`Skipped generated caches (never published${isRepo ? "; files git tracks in them were still scanned" : ""}): ${skippedCaches.join(", ")}`);
 if (images.length) console.log(`Images to check by eye for personal details (${images.length}): ${images.join(", ")}`);
 if (!uniq.length) { console.log("No sensitive values found."); process.exit(0); }
 console.log(`\n${uniq.length} finding(s). Nothing has been changed. Review each one:\n`);

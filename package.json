@@ -1,0 +1,14 @@
+{
+  "name": "glasshome-dashboard",
+  "private": true,
+  "description": "Development scripts for Glass Home. Nothing to install: there are no dependencies.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node tests/run-js-tests.mjs",
+    "test:js": "node tests/run-js-tests.mjs",
+    "validate": "node tools/validate.mjs"
+  }
+}

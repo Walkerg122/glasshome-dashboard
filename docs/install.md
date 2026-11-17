@@ -37,6 +37,13 @@ Optional: **kiosk-mode** (HACS) hides the sidebar and header for non-admin users
 
 If `/config/www` did not exist before, restart Home Assistant once so it starts serving `/local/`.
 
+> [!WARNING]
+> **`packages/glasshome_heating.yaml` controls real heating.** Once loaded, its automation switches your
+> thermostat to Heat and changes its target temperature on a schedule. Copy it **only** if you have a Hive
+> thermostat and want Glass Home to run it, and read [Heating package safety](#heating-package-safety) first.
+> Copy packages one file at a time, never the whole `packages/` folder: `!include_dir_named packages` loads
+> every file in `/config/packages/`.
+
 ## 3. configuration.yaml (themes, and packages if you use any)
 
 If your `configuration.yaml` does not already load themes from `/config/themes`, add the `frontend:` lines from
@@ -49,6 +56,55 @@ If you use the TV power package, add the two values from
 
 Restart Home Assistant (Developer tools → YAML → **Check configuration**, then **Restart**). The restart is
 also what loads the News integration you copied.
+
+## Heating package safety
+
+*Only if you copied `packages/glasshome_heating.yaml`. Nothing else in Glass Home changes your heating: the
+package is optional, is off unless you copy it, and the dashboard's heating control centre also needs
+`features.heating_hive: true`.*
+
+> [!WARNING]
+> This package **operates a real heating system**. A wrong entity id, temperature or schedule can leave a home
+> too cold or heat it when nobody is there. Check everything below before you restart Home Assistant with it,
+> and watch the thermostat for the first day.
+
+**What it adds.** Two number helpers, `input_number.heating_comfort` and `input_number.heating_eco`, and one
+automation, **Heating schedule control** (`automation.heating_schedule_control`). The automation uses two
+actions on one thermostat only: `climate.set_hvac_mode` (always to `heat`) and `climate.set_temperature`. It
+runs when the Schedule helper turns on or off, when either temperature changes, when a boost ends, and when Home
+Assistant starts. During a schedule period it sets that period's temperature (or the comfort temperature);
+between periods, the eco temperature. It keeps the Hive in manual Heat so the Hive app's own schedule does not
+fight it.
+
+**Built-in safeguards.** It does nothing until the Schedule helper exists and the thermostat is available; it
+does nothing during a boost; and it **never turns a thermostat that is off back on by itself** (not after a
+restart, a schedule change or the end of a boost). Only choosing **Schedule** in the Glass Home heating card does
+that.
+
+**Check before restarting:**
+
+1. **Thermostat entity.** The file says `climate.thermostat` in 7 places. Replace every one with your Hive
+   thermostat's entity id (Settings → Devices & services → Entities, search `climate.`). Any thermostat that
+   happens to have the id `climate.thermostat` would otherwise be controlled. Use the same id in `heating.entity`
+   in your Glass Home settings.
+2. **HVAC modes.** The automation sets `hvac_mode: heat`. Open the thermostat in Home Assistant and check `heat`
+   is one of its modes and means heating (on a heat pump or air conditioner it could mean something else). This
+   package is written for Hive; other thermostats should use the standard thermostat card instead.
+3. **Target temperatures.** New number helpers start at **5 °C**. Set comfort and eco (Settings → Devices &
+   services → Helpers, or the heating control centre) before relying on the schedule. The fallbacks in the file,
+   20 °C comfort and 16 °C eco, are used only when a helper has no number.
+4. **Schedule.** Create the **Schedule** helper named "Heating schedule" (`schedule.heating_schedule`) and check
+   its days and times. Each period can carry its own temperature as data (`temperature: 21`).
+5. **Dependencies.** The Hive integration, the Schedule helper above, and, in `configuration.yaml`,
+   `homeassistant: packages: !include_dir_named packages`. Check that no other automation, the Hive app schedule
+   or another integration also changes the same thermostat.
+
+**To pause it:** choose **Off** or **Manual** in the Glass Home heating card, or turn off **Heating schedule
+control** in Settings → Automations & scenes. The thermostat then keeps its current setting.
+
+**To remove it:** delete `/config/packages/glasshome_heating.yaml` and restart Home Assistant, then set
+`features.heating_hive: false` in your Glass Home settings. The thermostat keeps its last mode and temperature,
+so set it the way you want it (or return it to the Hive app's schedule) afterwards.
 
 ## 4. Add the News integration (only with News)
 

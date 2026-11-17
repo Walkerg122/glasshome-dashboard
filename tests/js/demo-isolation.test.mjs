@@ -1,5 +1,5 @@
 // Demo isolation: demo mode must not send ANY state-changing request to the real Home Assistant.
-// Run with: node --test tests/js
+// Run with: node tests/run-js-tests.mjs   (or: npm test)
 //
 // This runs the shipped bundle's own adapter and guard code (the section between @@DEMO-GUARD-START and
 // @@DEMO-GUARD-END in www/glasshome/glasshome-cards.js) against a mocked Home Assistant: a WebSocket

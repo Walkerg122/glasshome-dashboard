@@ -25,7 +25,7 @@ to write YAML.
   `distance_unit`, `favourites`, `devices` (names, icons, hiding), `navigation.home`, `navigation.settings`,
   `appearance.background`.
 - A message at the bottom of the screen when a device command fails.
-- Unit tests for the setup model (`node --test tests/js`), and a fictional "real" home in the preview for the
+- Unit tests for the setup model (`node tests/run-js-tests.mjs`), and a fictional "real" home in the preview for the
   wizard (`ghcfg=none`).
 - The Space Grotesk font is now included (`www/glasshome/fonts/`, SIL Open Font Licence).
 - **Bin collections** settings: upload your council's calendar (`.ics` or CSV), paste or type dates, read a Home
@@ -147,6 +147,25 @@ to write YAML.
 - New release checks (`tests/js/privacy.test.mjs`): demo settings use only demo entities, demo mode blocks
   real actions, demo cameras never ask the server for a picture, and installed files carry no private
   addresses, hardware ids, tokens, stream addresses or home coordinates.
+- **Heating package safety.** The optional `packages/glasshome_heating.yaml` automation no longer turns a
+  thermostat that is **off** back to Heat by itself (after a Home Assistant restart, a schedule change or the
+  end of a boost); only choosing **Schedule** in the heating card does. It also waits until the Schedule
+  helper exists and the thermostat is available, so copying the file before finishing its setup changes
+  nothing. The file, [docs/install.md](docs/install.md#heating-package-safety) and the README now warn that the
+  package controls real heating, list what to check (thermostat entity, HVAC modes, temperatures, schedule,
+  dependencies) and explain how to pause or remove it. New tests: `tests/js/heating-package.test.mjs`.
+- **Privacy scanner and test caches.** `tools/validate.mjs` no longer reports the fictional test addresses that
+  pytest copies into `.pytest_cache` (or anything in `__pycache__`, `.mypy_cache`, `.ruff_cache`, `.tox`,
+  `.nox`, `.hypothesis`, `htmlcov` and virtual environments) when it scans a folder that is not a git
+  repository, such as a downloaded copy. Detection is unchanged everywhere else, and every file git tracks is
+  now scanned even inside skipped folders (previously a committed file under `node_modules/` or `dist/` was
+  missed). `.gitignore` covers more test caches and bytecode. New tests: `tests/js/validate.test.mjs`.
+
+### Development
+- **JavaScript tests run the same way everywhere:** `node tests/run-js-tests.mjs` (or `npm test`) on Windows,
+  macOS and Linux with Node 18 or later. The previously documented `node --test tests/js` depended on the Node
+  version (newer versions read the folder as a glob pattern and could find no tests). A small `package.json`
+  holds the scripts; there are still no dependencies.
 
 ## [1.0.0] - unreleased
 

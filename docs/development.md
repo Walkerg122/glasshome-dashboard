@@ -45,13 +45,23 @@ all of the sizes above, but not yet on physical phones, tablets or wall displays
 installation: real notches and home bars, iOS Safari's address bar, touch, and Home Assistant's own header and
 sidebar are not covered. Reports from real devices are welcome.
 
-## Tests for the setup model
+## JavaScript tests
+
+Needs Node.js 18 or later; nothing to install. From the repository folder, on Windows, macOS or Linux:
 
 ```bash
-node --test tests/js
+node tests/run-js-tests.mjs
 ```
 
-They load the plain-function part of `www/glasshome/glasshome-cards.js` (between `// @@MODEL-START` and
+`npm test` runs the same thing. The runner finds every `tests/js/*.test.mjs` file itself and hands them to
+Node's built-in test runner, so it does not depend on your shell expanding a wildcard (Command Prompt and
+PowerShell do not) or on how your Node version reads `node --test <folder>` (newer versions treat the argument
+as a glob pattern and can find no tests in a bare folder). Extra arguments go to `node --test`, for example
+`node tests/run-js-tests.mjs --test-name-pattern=demo`.
+
+### The setup model
+
+`tests/js/setup-model.test.mjs` and `tests/js/connections.test.mjs` load the plain-function part of `www/glasshome/glasshome-cards.js` (between `// @@MODEL-START` and
 `// @@MODEL-END`) and test device discovery, rooms from areas, building and reading back settings, the checks
 before saving, the YAML export and the Open-Meteo parser. No dependencies.
 
@@ -61,6 +71,10 @@ of state-changing request (device actions, scripts, automations, notifications, 
 dashboard and storage writes, REST calls) by every route and checks that none reaches the mock, that reads still
 work, and that nothing is blocked outside demo mode. The preview also logs every request its stand-in server
 receives in `window.GlassHomePreviewServer`, so the same can be checked by hand in the browser.
+
+`tests/js/validate.test.mjs` runs the privacy scanner (`tools/validate.mjs`) on throw-away folders: it must
+ignore test caches, still report a sensitive value in a release file, in a git-tracked file inside a cache or
+`node_modules` folder, and in git history.
 
 ## Tests for the News integration
 
@@ -76,6 +90,10 @@ redirects, size and content-type limits, without Home Assistant or network acces
 
 ```bash
 node tools/validate.mjs
+node tools/validate.mjs --history
 ```
 
-It must report no findings. See [SECURITY.md](../SECURITY.md).
+Both must report no findings. See [SECURITY.md](../SECURITY.md). Test and tool caches (`.pytest_cache`,
+`__pycache__`, `.mypy_cache`, `.ruff_cache`, `.tox`, `.nox`, virtual environments, `node_modules`, `dist`) are
+generated, never published and not scanned, so running the tests first does not cause findings. Any file that
+git tracks is always scanned, even inside one of those folders.

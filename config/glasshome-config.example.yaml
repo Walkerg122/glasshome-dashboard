@@ -97,7 +97,8 @@ climate:
   temperature: sensor.hallway_temperature        # optional indoor temperature sensor
   # heater: { switch: switch.plug_in_heater, power: sensor.heater_power, today: sensor.heater_energy_today, month: sensor.heater_energy_month }
 
-# Only with features.heating_hive (Hive integration + packages/glasshome_heating.yaml)
+# Only with features.heating_hive (Hive integration + packages/glasshome_heating.yaml, which controls real
+# heating: read "Heating package safety" in docs/install.md first)
 heating:
   title: Thermostat
   climate: climate.living_room

@@ -6,7 +6,8 @@
 # instead of creating a second one (duplicate top-level keys are an error).
 
 homeassistant:
-  # loads every file in /config/packages (the glasshome_*.yaml packages you copied)
+  # loads every file in /config/packages (the glasshome_*.yaml packages you copied). Copy only the ones you use:
+  # glasshome_heating.yaml controls real heating (see docs/install.md, Heating package safety)
   packages: !include_dir_named packages
 
 frontend:

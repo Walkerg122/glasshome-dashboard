@@ -1,6 +1,6 @@
 // Release safety checks: demo mode only knows fictional devices and never sends an action to a real
 // one, and the files people install carry no network addresses, hardware ids or credentials.
-// Run with: node --test tests/js
+// Run with: node tests/run-js-tests.mjs   (or: npm test)
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync, statSync } from "node:fs";

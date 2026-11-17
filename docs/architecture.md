@@ -60,7 +60,7 @@ The setup's logic is plain functions with no browser dependencies (between `// @
 - `ghsProblems` lists what still stops a save. `ghsToYaml` writes the YAML export.
 - `ghsOpenMeteoUrl` and `ghsOpenMeteoParse` turn Open-Meteo's forecast into a Home Assistant style weather entity.
 
-`tests/js/setup-model.test.mjs` tests these functions against the shipped file (`node --test tests/js`).
+`tests/js/setup-model.test.mjs` tests these functions against the shipped file (`node tests/run-js-tests.mjs`).
 
 ## Built-in weather
 

@@ -1,5 +1,5 @@
 // Tests for the setup wizard's model: discovery, settings building and the built-in weather parser.
-// Run with: node --test tests/js
+// Run with: node tests/run-js-tests.mjs   (or: npm test)
 // The model is the plain-function section of the shipped bundle between // @@MODEL-START and // @@MODEL-END,
 // so these tests check exactly the code Home Assistant loads.
 import { test } from "node:test";

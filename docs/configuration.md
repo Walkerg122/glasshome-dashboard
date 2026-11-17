@@ -149,7 +149,8 @@ climate: { thermostat: climate.living_room, temperature: sensor.hallway_temperat
 `climate.heater` (optional) adds a plug-in heater: `{ switch, power, today, month }`.
 
 With `features.heating_hive`, the `heating` block maps the Hive entities and the helpers created by
-`packages/glasshome_heating.yaml`. See the comments in the example file.
+`packages/glasshome_heating.yaml`. See the comments in the example file. That package controls real heating:
+read [Heating package safety](install.md#heating-package-safety) before installing it.
 
 ## presence
 

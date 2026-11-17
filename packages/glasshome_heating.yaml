@@ -1,14 +1,30 @@
 # Glass Home: heating schedule for a Hive thermostat (features.heating_hive in the dashboard's glasshome: settings).
+#
+# !! WARNING: THIS PACKAGE CONTROLS REAL HEATING. !!
+# Once Home Assistant loads it, the automation below changes your thermostat's HVAC mode and target temperature
+# on a schedule. It is optional and nothing loads it unless you copy this file into /config/packages/ yourself.
+# Read "Heating package safety" in docs/install.md before installing it, and check every item marked CHANGE ME.
+#
 # Put this file in /config/packages/ and add to configuration.yaml:
 #   homeassistant:
 #     packages: !include_dir_named packages
 #
-# CHANGE ME: replace climate.thermostat below with your Hive climate entity.
+# CHANGE ME: replace every climate.thermostat below (7 places) with YOUR Hive climate entity, and check it is the
+# thermostat you mean: any thermostat that happens to be called climate.thermostat would be controlled.
 # ALSO: create a Schedule helper in Settings > Devices & services > Helpers > Create helper > Schedule,
 # named "Heating schedule" (entity id schedule.heating_schedule). It is created in the UI rather than here
 # so that its times stay editable from the dashboard. Each period can carry its own temperature as data; between periods the eco
 # temperature applies. The automation keeps the Hive in Heat (manual) so the Hive app schedule does
 # not interfere, and re-applies the schedule when a boost ends.
+# THEN: set the comfort and eco temperatures (Settings > Devices & services > Helpers). New helpers start at 5 °C.
+#
+# Safety rules built into the automation:
+#   - It does nothing until the Schedule helper exists and the thermostat is available.
+#   - It never turns a thermostat that is OFF back on by itself (after a restart, a schedule change or the end of
+#     a boost). Only choosing Schedule in the Glass Home heating card does that.
+#   - It does nothing during a boost.
+# To stop it: choose Off or Manual in the heating card, or turn off the automation "Heating schedule control"
+# (Settings > Automations & scenes). To remove it: delete this file from /config/packages/ and restart.
 
 input_number:
   heating_comfort:
@@ -29,27 +45,39 @@ input_number:
 automation:
   - id: glasshome_heating_schedule
     alias: Heating schedule control
-    description: "Runs the Hive thermostat from the Home Assistant heating schedule (schedule.heating_schedule): each period sets its own temperature (falling back to the comfort temperature) and the eco temperature applies between periods. Keeps the Hive in Heat (manual) so the Hive app schedule does not interfere. Re-applies the schedule when a boost ends. Part of Glass Home."
+    description: "Runs the Hive thermostat from the Home Assistant heating schedule (schedule.heating_schedule): each period sets its own temperature (falling back to the comfort temperature) and the eco temperature applies between periods. Keeps the Hive in Heat (manual) so the Hive app schedule does not interfere. Re-applies the schedule when a boost ends. Never turns a thermostat that is off back on by itself: only choosing Schedule in the Glass Home heating card does. Part of Glass Home."
     triggers:
       - trigger: state
         entity_id: schedule.heating_schedule
+        id: automatic
       - trigger: state
         entity_id:
           - input_number.heating_comfort
           - input_number.heating_eco
+        id: automatic
       - trigger: state
         entity_id: climate.thermostat
         attribute: preset_mode
         from: boost
+        id: automatic
       - trigger: homeassistant
         event: start
+        id: automatic
     conditions:
+      # set up and reachable: the Schedule helper exists and the thermostat answers
+      - condition: template
+        value_template: "{{ states('schedule.heating_schedule') in ['on', 'off'] and states('climate.thermostat') not in ['unavailable', 'unknown'] }}"
+      # never during a boost
       - condition: not
         conditions:
           - condition: state
             entity_id: climate.thermostat
             attribute: preset_mode
             state: boost
+      # a thermostat that is off stays off, unless this run was started from the heating card's Schedule button
+      # (which runs the automation by hand, so it has no trigger id)
+      - condition: template
+        value_template: "{{ not is_state('climate.thermostat', 'off') or (trigger is defined and trigger.id | default('') != 'automatic') }}"
     actions:
       - variables:
           target: "{% if is_state('schedule.heating_schedule', 'on') %}{{ state_attr('schedule.heating_schedule', 'temperature') | float(states('input_number.heating_comfort') | float(20)) }}{% else %}{{ states('input_number.heating_eco') | float(16) }}{% endif %}"

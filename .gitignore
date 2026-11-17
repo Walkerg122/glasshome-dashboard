@@ -63,11 +63,21 @@ private/
 
 # --- Tooling ---
 node_modules/
-__pycache__/
-.pytest_cache/
-*.pyc
-.venv/
 dist/
+# test caches, bytecode and virtual environments (generated, never published)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
 .DS_Store
 Thumbs.db
 desktop.ini

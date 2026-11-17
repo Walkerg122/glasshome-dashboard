@@ -42,7 +42,8 @@ Each feature falls into one of four groups:
 ## Things that could not be made universal
 
 - **Hive heating centre** relies on Hive's own behaviour: the schedule is applied by keeping the thermostat in
-  manual Heat mode. Other thermostats use Home Assistant's standard thermostat card instead.
+  manual Heat mode. Other thermostats use Home Assistant's standard thermostat card instead. Its package
+  controls real heating: see [Heating package safety](install.md#heating-package-safety).
 - **Energy** works with any meter Home Assistant can read. Live cost, unit rates and standing charges need sensors
   that provide them (the Octopus integration does; with other meters they are optional). Costs are shown in pounds.
   Readings that come through the smart meter network (Hildebrand Glow) usually arrive about half an hour late.

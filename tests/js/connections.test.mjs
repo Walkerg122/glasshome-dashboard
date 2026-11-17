@@ -1,5 +1,5 @@
 // Tests for the connection settings: council bin calendars, energy meters, Spotify and own floor plans.
-// Run with: node --test tests/js
+// Run with: node tests/run-js-tests.mjs   (or: npm test)
 // Like setup-model.test.mjs, this checks the model section of the shipped bundle. All data is fictional.
 import { test } from "node:test";
 import assert from "node:assert/strict";

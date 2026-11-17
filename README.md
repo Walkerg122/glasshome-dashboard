@@ -58,7 +58,9 @@ Nothing else: all Glass Home cards are in this repository.
 The full guide is in [docs/install.md](docs/install.md). In short:
 
 1. Copy `www/glasshome/` to `/config/www/glasshome/` and `themes/glasshome.yaml` to `/config/themes/`. For News,
-   copy `custom_components/glasshome_news/` to `/config/custom_components/`. Copy any packages you want.
+   copy `custom_components/glasshome_news/` to `/config/custom_components/`. Copy any packages you want, one file
+   at a time. **The heating package controls real heating:** read
+   [Heating package safety](docs/install.md#heating-package-safety) before using it.
 2. Restart Home Assistant. For News, add the **Glass Home News** integration (Settings → Devices & services).
 3. Add the resources (Settings → Dashboards → ⋮ → Resources, all **JavaScript module**):
    - `/local/glasshome/glasshome-cards.js?v=2.0.0`
@@ -138,13 +140,16 @@ demo. To try the setup wizard against a small fictional home, see [docs/developm
 - **Browsers:** container queries need Safari 16+ or Chrome 105+ (2022). Older browsers get a simpler layout.
 - Some features are built around particular integrations (Hive heating, SmartThings washers, Android TV Remote,
   Spotify or Music Assistant). They are optional and off by default.
+- **The optional heating package (`packages/glasshome_heating.yaml`) operates a real thermostat** once you
+  install it. Check the entity, HVAC mode, temperatures and schedule first:
+  [Heating package safety](docs/install.md#heating-package-safety).
 
 ## Contributing
 
 Bug reports, installation problems and pull requests are welcome. Please use the issue forms
 (**Bug report** or **Installation problem**), and remove anything personal first: entity ids are fine to share,
 but not addresses, names, IP or MAC addresses, tokens or screenshots of a real home. Before a pull request, run
-the checks in [docs/development.md](docs/development.md) (`node --test tests/js`, `python -m pytest` and
+the checks in [docs/development.md](docs/development.md) (`node tests/run-js-tests.mjs`, `python -m pytest` and
 `node tools/validate.mjs`).
 
 **Security problems:** please do not open a public issue. Report them privately as described in
