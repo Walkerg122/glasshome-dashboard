@@ -97,3 +97,15 @@ Both must report no findings. See [SECURITY.md](../SECURITY.md). Test and tool c
 `__pycache__`, `.mypy_cache`, `.ruff_cache`, `.tox`, `.nox`, virtual environments, `node_modules`, `dist`) are
 generated, never published and not scanned, so running the tests first does not cause findings. Any file that
 git tracks is always scanned, even inside one of those folders.
+
+## Making a release ZIP
+
+```bash
+node tools/make-release-zip.mjs v2.0.0-beta.1
+```
+
+It builds `dist/glasshome-v2.0.0-beta.1.zip` from the **last commit** only (`git archive`), so untracked,
+ignored and local files can never be included, and refuses to run with uncommitted changes. The ZIP holds the
+install files in their documented paths, the docs, the examples, and `tools/release/START-HERE.txt` at the top;
+tests, development tools and repository settings are left out. Extract it and run
+`node tools/validate.mjs --dir <extracted folder>` before attaching it to a release.

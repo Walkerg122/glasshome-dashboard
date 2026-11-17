@@ -1,0 +1,54 @@
+GLASS HOME 2.0 PUBLIC BETA - START HERE
+=======================================
+
+Glass Home is a glass-style, touch-first dashboard for Home Assistant. This ZIP holds only the files you
+install, in the same folders the guide uses. The full step-by-step guide is docs/install.md
+(also on the project's GitHub page).
+
+This is a BETA. It has been tested with automated tests and in a browser preview, but not yet on a clean,
+separate Home Assistant installation or on physical phones and tablets. Make a backup first
+(Settings > System > Backups). Glass Home installs next to your existing dashboards and changes nothing else.
+
+Before you start
+----------------
+- Home Assistant 2024.11 or newer, and an administrator account.
+- card-mod, installed from HACS (required). kiosk-mode from HACS is optional.
+- A way to copy files into /config (File editor, Samba share or Studio Code Server add-on).
+
+What to copy (from this ZIP to your Home Assistant)
+---------------------------------------------------
+ALWAYS
+  www/glasshome/            ->  /config/www/glasshome/          (card code, background and font)
+  themes/glasshome.yaml     ->  /config/themes/glasshome.yaml   (the glass theme)
+  dashboards/glasshome.yaml     paste into a new dashboard's raw configuration editor
+                                (docs/install.md, step 6), or copy to /config/glasshome/dashboard.yaml
+
+ONLY WITH NEWS
+  custom_components/glasshome_news/  ->  /config/custom_components/glasshome_news/
+
+OPTIONAL PACKAGES (copy only the ones you use, one file at a time, never the whole folder)
+  packages/glasshome_heating.yaml   Hive heating schedule.  WARNING: CONTROLS REAL HEATING.
+                                    Read "Heating package safety" in docs/install.md first.
+  packages/glasshome_laundry.yaml   SmartThings washer tracking
+  packages/glasshome_tv_power.yaml  TV power with Wake-on-LAN (needs two values in secrets.yaml)
+  ->  /config/packages/
+
+EXAMPLES (for reference, nothing here is copied as-is)
+  config/configuration.example.yaml    lines to merge into configuration.yaml
+  config/secrets.example.yaml          placeholder values for the TV power package
+  config/glasshome-config.example.yaml settings written by hand (the setup wizard does this for you)
+  examples/                            a demo and a minimal settings file
+
+Then
+----
+1. Restart Home Assistant (Developer tools > YAML > Check configuration, then Restart).
+2. Add the resource /local/glasshome/glasshome-cards.js?v=2.0.0 as a JavaScript module
+   (Settings > Dashboards > three-dot menu > Resources). With News, also /local/glasshome/glasshome-news.js?v=2.0.0
+3. Create the dashboard (docs/install.md, step 6) and open it. The welcome screen offers
+   "Get started" (the setup wizard) or "Explore the demo" (a fictional home that never changes anything).
+
+Never put your own settings, tokens or passwords in /config/www: anything there can be downloaded without
+signing in. Problems: docs/troubleshooting.md, then the project's GitHub Issues (remove anything personal first).
+Security problems: report them privately as described in SECURITY.md.
+
+Licence: MIT (LICENSE). Font: SIL Open Font Licence (www/glasshome/fonts/OFL.txt).

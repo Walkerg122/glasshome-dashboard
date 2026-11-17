@@ -3,10 +3,36 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/) and
 versions follow [Semantic Versioning](https://semver.org/).
 
-## [2.0.0] - unreleased (public beta)
+## [2.0.0-beta.1] - unreleased (planned public beta)
 
-Brings the demo up to date with the primary dashboard it was built from, and adds a setup wizard so nobody has
-to write YAML.
+The first public beta of Glass Home 2.0, to be tagged `v2.0.0-beta.1`. The date is added when it is published.
+
+### Highlights
+- **A guided first-time setup.** A welcome screen and an eight-step wizard set Glass Home up for your home
+  without any YAML: your household, location and weather, devices, rooms, favourites, look and features.
+- **Personalise everything later** in the Settings page: names, greeting, clock, units, currency, page names,
+  background, favourites, rooms, devices and which features are shown.
+- **Your own Home Assistant devices.** The wizard finds devices and rooms in Home Assistant's registries and
+  links to Home Assistant's own setup for Matter, Zigbee, Z-Wave, MQTT and Wi-Fi brands. Optional connectors for
+  energy meters, Spotify and Music Assistant, cameras, bin calendars, Hive heating and SmartThings washers.
+- **Demo mode** (**Explore the demo**, or `demo: true`): a complete fictional home that only reads from Home
+  Assistant and never changes anything in it.
+- **Responsive layout** from 320 px phones to 2560 px monitors, in portrait and landscape.
+- **Weather** built in from Open-Meteo (no key, place search) or from any Home Assistant weather entity, with
+  the real source named and times shown in the place's time zone.
+- **Security and privacy:** settings live in the signed-in dashboard configuration, never in the public
+  `/config/www`; the News fetcher refuses local network addresses; a privacy scanner and tests ship with the
+  repository. No personal configuration is bundled.
+- **Heating safety:** the optional Hive heating package never turns a thermostat that is off back on by
+  itself, and is documented with a safety checklist.
+
+### Known limitations
+- Tested with automated tests and in the bundled browser preview only. **Not yet verified on a clean, separate
+  Home Assistant installation, or on physical phones and tablets.**
+- Manual install (not a HACS repository yet). card-mod from HACS is required.
+- Several features need optional integrations (Hive, SmartThings, Android TV Remote, Spotify, Music Assistant,
+  Octopus Energy or Hildebrand Glow). Device support depends on what Home Assistant supports in your home.
+- Saving settings needs an administrator; YAML-file dashboards get the settings as YAML to paste instead.
 
 ### Added
 - **Setup wizard.** A welcome screen (**Get started** or **Explore the demo**) and eight steps: you and your home,
@@ -166,6 +192,10 @@ to write YAML.
   macOS and Linux with Node 18 or later. The previously documented `node --test tests/js` depended on the Node
   version (newer versions read the folder as a glob pattern and could find no tests). A small `package.json`
   holds the scripts; there are still no dependencies.
+- **Release ZIP:** `node tools/make-release-zip.mjs <version>` packages only the files people install (from the
+  last commit), with a `START-HERE.txt` that says what is required and what is optional.
+- README: first-time setup, connecting devices, weather, demo mode and getting help sections. SECURITY.md:
+  step-by-step private reporting, never with real credentials.
 
 ## [1.0.0] - unreleased
 

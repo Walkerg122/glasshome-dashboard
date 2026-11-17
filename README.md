@@ -55,7 +55,9 @@ Nothing else: all Glass Home cards are in this repository.
 
 ## Install
 
-The full guide is in [docs/install.md](docs/install.md). In short:
+The full guide is in [docs/install.md](docs/install.md). Download the installation ZIP from this repository's
+**Releases** page (it holds only the files you install, in the same folders as below), or clone
+this repository. In short:
 
 1. Copy `www/glasshome/` to `/config/www/glasshome/` and `themes/glasshome.yaml` to `/config/themes/`. For News,
    copy `custom_components/glasshome_news/` to `/config/custom_components/`. Copy any packages you want, one file
@@ -69,6 +71,37 @@ The full guide is in [docs/install.md](docs/install.md). In short:
    its raw configuration editor, deleting the `glasshome: !include config.yaml` line. A YAML-file install is also
    supported.
 5. Open the dashboard. The welcome screen starts the setup wizard ([docs/setup-guide.md](docs/setup-guide.md)).
+
+## First-time setup
+
+The first time you open Glass Home, a welcome screen offers **Get started** or **Explore the demo**. The wizard
+then walks through eight steps: you and your home, location and weather, connecting your devices, rooms,
+devices, look, features and finish. It saves its progress, so a refresh does not lose your place, and checks for
+problems before saving the settings into the dashboard. Everything can be changed later in **Settings** (the
+last button in the bottom bar). Details: [docs/setup-guide.md](docs/setup-guide.md).
+
+<p align="center">
+  <img src="docs/screenshots/setup-desktop.png" alt="The setup wizard (demo data)" width="640">
+</p>
+
+## Connecting your devices
+
+Glass Home shows and controls what **Home Assistant** already has: add devices to Home Assistant first (Matter,
+Zigbee, Z-Wave, MQTT, Wi-Fi brands and the many other integrations), then pick them in the wizard. Glass Home
+never asks for a password or key for another service. Accounts such as Spotify, energy suppliers and cameras are
+connected in Home Assistant's own integration setup. The wizard's **Connect your devices** step and
+[docs/integrations.md](docs/integrations.md) explain how; [docs/features.md](docs/features.md) lists which
+integration each feature uses.
+
+## Weather
+
+Choose in the wizard's location step, or in Settings:
+
+- **Built-in weather** from [Open-Meteo](https://open-meteo.com/): search for your town, no account or key.
+  The browser sends only the chosen place, rounded to about 1 km.
+- **A Home Assistant weather entity**, for example the Met.no integration that new installations include.
+
+See [docs/configuration.md](docs/configuration.md#weather).
 
 ## Configuration
 
@@ -104,7 +137,14 @@ size**: small tiles take half the width and the page scrolls. Large monitors get
 that should show the whole page at once can set `layout: { fit: scale }` in the settings instead. Real devices
 (notches, iOS Safari's address bar, touch) have not been tested yet.
 
-## Try it without Home Assistant
+## Demo mode
+
+**Explore the demo** on the welcome screen (or `glasshome: { demo: true }` in the settings) shows a complete
+fictional home. It only **reads** from Home Assistant: no light, heating, lock, script, setting or layout is
+changed, whatever you press (see [SECURITY.md](SECURITY.md#demo-mode-never-changes-your-home-assistant)).
+**Exit demo** returns to your own home.
+
+### Try it without Home Assistant
 
 ```bash
 node tools/preview/serve.mjs
@@ -143,6 +183,12 @@ demo. To try the setup wizard against a small fictional home, see [docs/developm
 - **The optional heating package (`packages/glasshome_heating.yaml`) operates a real thermostat** once you
   install it. Check the entity, HVAC mode, temperatures and schedule first:
   [Heating package safety](docs/install.md#heating-package-safety).
+
+## Getting help
+
+Start with [docs/troubleshooting.md](docs/troubleshooting.md) and the **Setup** page
+(`/glass-home/setup`), which names any missing setting or entity. **Settings → Advanced** can copy diagnostics
+(versions, counts and missing entity ids, nothing personal) to include in a report; read them before posting.
 
 ## Contributing
 

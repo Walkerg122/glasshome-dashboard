@@ -2,10 +2,19 @@
 
 ## Reporting a problem
 
-Please report security problems privately through GitHub's **Report a vulnerability** button (Security tab
-→ Advisories), not in a public issue. If that button is missing, open an issue that says only "security
-contact requested", without details, and the maintainer will get in touch privately. Include the file, what an attacker could do, and how to reproduce it. Never include
-your own tokens, passwords or addresses in a report.
+Please report security problems **privately**, never in a public issue, discussion or pull request:
+
+1. Open this repository's **Security** tab and choose **Report a vulnerability** (GitHub's private
+   vulnerability reporting). Only the maintainer can see the report.
+2. Describe the problem: the file or feature, what an attacker could do, and how to reproduce it.
+3. **Never include real credentials**: no tokens, passwords, API keys, addresses or screenshots of a real home.
+   Use made-up values in examples.
+
+If the **Report a vulnerability** button is missing, open an issue that says only "security contact requested",
+with **no details** of the problem, and the maintainer will contact you privately.
+
+Glass Home is a beta maintained by one person. Reports are read and answered as soon as possible, and fixes go
+into the next release. Please give a reasonable time for a fix before disclosing a problem publicly.
 
 ## What Glass Home does and does not store
 
