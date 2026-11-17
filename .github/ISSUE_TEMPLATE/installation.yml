@@ -1,0 +1,70 @@
+name: Installation problem
+description: Glass Home doesn't load, a card shows an error, or a setup step fails.
+labels: ["installation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check [docs/troubleshooting.md](../blob/main/docs/troubleshooting.md) first. **Remove anything
+        personal** before posting (addresses, names, IP or MAC addresses, tokens, screenshots of a real home).
+  - type: dropdown
+    id: step
+    attributes:
+      label: Which step of docs/install.md?
+      options:
+        - 1. card-mod
+        - 2. Copying the files
+        - 3. configuration.yaml (themes, packages)
+        - 4. News integration
+        - 5. Resources
+        - 6. Creating the dashboard
+        - Setup wizard
+        - 7. Check (setup page)
+        - Updating
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: The exact message you saw, and what you expected.
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Dashboard mode
+      options:
+        - Made in the UI (storage mode)
+        - YAML file
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: ha
+    attributes:
+      label: Home Assistant version and installation type
+      placeholder: "2026.11.0, Home Assistant OS"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Glass Home version
+      placeholder: "2.0.0"
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checked
+      options:
+        - label: card-mod is installed and the browser was reloaded
+        - label: Both resources are "JavaScript module" and their ?v= was changed after copying new files
+        - label: I'm signed in as an administrator (needed to save settings)
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console errors (optional)
+      render: text

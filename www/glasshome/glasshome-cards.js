@@ -1023,7 +1023,7 @@ function ghDemoStates() {
   const up = new Date().getHours() >= 7 && new Date().getHours() < 16;
   const st = {
     "sun.sun": S(up ? "above_horizon" : "below_horizon", { friendly_name: "Sun", next_rising: at(7, 14), next_setting: at(16, 21), elevation: up ? 18 : -12 }),
-    "weather.demo_home": S("partlycloudy", { friendly_name: "Home", temperature: 14, temperature_unit: "°C", wind_speed: 12, humidity: 71, supported_features: 3 }),
+    "weather.demo_home": S("partlycloudy", { friendly_name: "Home", attribution: "Demo weather: made-up figures for the fictional home, not a real forecast.", temperature: 14, temperature_unit: "°C", wind_speed: 12, humidity: 71, supported_features: 3 }),
     "light.demo_lounge_lamp": S("on", { friendly_name: "Lounge lamp", brightness: 180, supported_color_modes: ["brightness"], color_mode: "brightness" }),
     "light.demo_hall_ceiling": S("off", { friendly_name: "Hall ceiling", supported_color_modes: ["brightness"] }),
     "light.demo_porch": S("off", { friendly_name: "Porch light", supported_color_modes: ["onoff"] }),
@@ -1091,6 +1091,7 @@ const ghIsDemo = (id) => typeof id === "string" && id in GH_DEMO_STATES;
 // which adds (1) the demo entities in demo mode, (2) virtual entities such as the built-in Open-Meteo
 // weather, and (3) the names and icons chosen in setup (devices: in the settings). Actions on real
 // entities go to Home Assistant unchanged; a failed one is reported on screen, never shown as done.
+// @@DEMO-GUARD-START (tests/js/demo-isolation.test.mjs runs this section on its own)
 const GH_VSTATES = {};
 const GH_VFORECAST = {};
 const GH_VSUBS = new Set();
@@ -1177,24 +1178,102 @@ function ghStatesContext() {
       sub.cb(ghExtraStates(sub.real), unsub);
     };
   }, true);
-  // Those cards also call actions through the shared connection: actions that name only demo
-  // entities are handled here and never reach Home Assistant.
+  ghDemoGuardRoot();
+}
+
+// ------------------------------------------------------------------ demo isolation
+// Demo mode must never change anything in the real Home Assistant: no device actions, scripts or
+// automations, no integration reloads, no dashboard, registry, schedule or user-data writes. Rather than
+// listing what is forbidden (a list that misses the next new call), only READ requests are let through and
+// everything else is answered here without being sent. The rule is enforced at every layer a card can
+// reach Home Assistant through, not just in the buttons:
+//   1. the cards' own hass object (ghHass: callService, callWS, callApi, callApiRaw, fetchWithAuth, connection)
+//   2. the shared WebSocket connection (sendMessagePromise, sendMessage, subscribeMessage), which also covers
+//      the setup wizard, Settings and Home Assistant's own cards on this dashboard
+//   3. the browser's fetch for Home Assistant's REST API (/api/...), which is how hass.callApi is sent.
+// Layers 2 and 3 apply on the Glass Home dashboard only; other dashboards are never affected.
+const GH_DEMO_READ = new Set(["ping", "get_states", "get_config", "get_services", "get_panels", "supported_features", "auth/current_user",
+  "auth/sign_path", "render_template", "entity/source", "lovelace/config", "lovelace/info", "lovelace/resources", "config_entries/flow/progress",
+  "history/history_during_period", "history/stream", "logbook/get_events", "logbook/event_stream", "recorder/statistics_during_period",
+  "recorder/statistic_during_period", "recorder/list_statistic_ids", "recorder/get_statistics_metadata", "media_player/browse_media",
+  "media_source/browse_media", "media_source/resolve_media", "search/related", "camera/stream", "camera/capabilities", "todo/item/list"]);
+// Home Assistant names its read calls get, list, subscribe or info: config/area_registry/list,
+// frontend/get_user_data, schedule/list, config_entries/get, weather/subscribe_forecast, subscribe_entities.
+const GH_DEMO_READ_RE = /^(?:(?:subscribe|unsubscribe)_[a-z_]+|(?:[a-z_]+\/){1,2}(?:get|list|subscribe|info)(?:_[a-z_]+)?)$/;
+const ghDemoReadOnly = (m) => !!m && typeof m.type === "string" && (GH_DEMO_READ.has(m.type) || GH_DEMO_READ_RE.test(m.type));
+const ghDemoHere = () => GH_DEMO && ghDashPath() === GH_LOADED.path;
+let GH_DEMO_SAID = 0;
+// the error a refused request fails with (callers see a failure, never a pretend success)
+function ghDemoRefuse(what) {
+  try { console.info("Glass Home demo: not sent to Home Assistant", what); } catch (e) { /* no console */ }
+  if (Date.now() - GH_DEMO_SAID > 4000) { GH_DEMO_SAID = Date.now(); ghToast("Demo mode: nothing is changed in Home Assistant. Set up your own home to do this.", "warn"); }
+  const err = new Error("Demo mode: nothing is changed in Home Assistant");
+  err.code = "glasshome_demo";
+  return err;
+}
+// null when a WebSocket message may be sent in demo mode, otherwise the answer to give instead
+function ghDemoGate(m) {
+  if (ghDemoReadOnly(m)) return null;
+  const t = (m && m.type) || "?";
+  if (t === "call_service" || t === "execute_script") { ghDemoBlocked(m.domain, m.service); return Promise.resolve({ context: { id: "demo-blocked" } }); }
+  return Promise.reject(ghDemoRefuse(t));
+}
+// REST calls: only GET and HEAD are reads
+const ghDemoMethodOk = (method) => /^(GET|HEAD)$/i.test(String(method || "GET"));
+function ghDemoFetchBlocked(input, init) {
+  const req = typeof Request !== "undefined" && input instanceof Request ? input : null;
+  if (ghDemoMethodOk((init && init.method) || (req && req.method) || "GET")) return false;
+  let u;
+  try { u = new URL(req ? req.url : String(input), location.href); } catch (e) { return true; }
+  // /auth/token is how Home Assistant keeps you signed in; it changes nothing in your home
+  return /^\/api\//.test(u.pathname);
+}
+function ghDemoGuardFetch() {
+  if (!GH_DEMO || typeof window.fetch !== "function" || window.fetch.__ghDemo) return;
+  const real = window.fetch;
+  const guarded = function (input, init) {
+    if (ghDemoHere() && ghDemoFetchBlocked(input, init)) return Promise.reject(ghDemoRefuse(`fetch ${String((init && init.method) || (input && input.method) || "")} ${input && input.url ? input.url : input}`));
+    return real.call(this, input, init);
+  };
+  guarded.__ghDemo = true;
+  window.fetch = guarded;
+}
+// Patches the page's one shared connection. Home Assistant may not have connected yet when this file
+// loads, so it keeps looking for a minute.
+let GH_ROOT_TRIES = 0;
+function ghDemoGuardRoot() {
+  ghDemoGuardFetch();
   const root = document.querySelector("home-assistant");
   const conn = root && root.hass && root.hass.connection;
-  if (conn && !conn.__ghDemo) {
-    conn.__ghDemo = true;
-    const send = conn.sendMessagePromise.bind(conn);
-    const demoCam = /^\/api\/camera_proxy(_stream)?\/(camera\.[a-z0-9_]+)/;
-    conn.sendMessagePromise = (m) => {
-      if (m && m.type === "call_service" && ghDemoAction(m.domain, m.service, m.service_data || {}, m.target || {})) return Promise.resolve({ context: { id: "demo" } });
-      // on the Glass Home dashboard in demo mode nothing else is sent either (other dashboards are not affected)
-      if (m && (m.type === "call_service" || m.type === "execute_script") && ghDashPath() === GH_LOADED.path) { ghDemoBlocked(m.domain, m.service); return Promise.resolve({ context: { id: "demo-blocked" } }); }
+  if (!conn) { if (GH_ROOT_TRIES++ < 600) setTimeout(ghDemoGuardRoot, 100); return; }
+  if (conn.__ghDemo) return;
+  conn.__ghDemo = true;
+  const send = conn.sendMessagePromise.bind(conn);
+  const one = typeof conn.sendMessage === "function" ? conn.sendMessage.bind(conn) : null;
+  const sub = typeof conn.subscribeMessage === "function" ? conn.subscribeMessage.bind(conn) : null;
+  const demoCam = /^\/api\/camera_proxy(_stream)?\/(camera\.[a-z0-9_]+)/;
+  conn.sendMessagePromise = (m) => {
+    // actions that name only demo entities are simulated in the browser
+    if (m && m.type === "call_service" && ghDemoAction(m.domain, m.service, m.service_data || {}, m.target || {})) return Promise.resolve({ context: { id: "demo" } });
+    if (ghDemoHere()) {
       // a demo camera has no picture on the server: show the Glass Home background instead
       const cam = m && m.type === "auth/sign_path" && demoCam.exec(m.path || "");
       if (cam && ghIsDemo(cam[2])) return Promise.resolve({ path: new URL(GH_ASSETS).pathname + "bg.svg?demo=camera" });
-      return send(m);
-    };
-  }
+      const no = ghDemoGate(m);
+      if (no) return no;
+    }
+    return send(m);
+  };
+  // the lower-level send that sendMessagePromise and subscriptions use: a last line of defence
+  if (one) conn.sendMessage = (m, id) => {
+    if (ghDemoHere() && !ghDemoReadOnly(m)) {
+      const err = ghDemoRefuse((m && m.type) || "?"), c = id != null && conn.commands && conn.commands.get && conn.commands.get(id);
+      if (c) { conn.commands.delete(id); if (c.reject) c.reject(err); }
+      return;
+    }
+    return one(m, id);
+  };
+  if (sub) conn.subscribeMessage = (cb, m, opts) => (ghDemoHere() && !ghDemoReadOnly(m) ? Promise.reject(ghDemoRefuse((m && m.type) || "?")) : sub(cb, m, opts));
 }
 function ghDemoForecast(type) {
   const now = Date.now();
@@ -1234,8 +1313,15 @@ function ghHass(h) {
     }
     if (ids.length && ghDemoAction(m.domain, m.service, m.service_data, m.target)) return { context: { id: "demo" }, response: null };
     if (GH_DEMO && m && (m.type === "call_service" || m.type === "execute_script")) { ghDemoBlocked(m.domain, m.service); return { context: { id: "demo-blocked" }, response: null }; }
+    // demo mode: only read requests reach Home Assistant (see "demo isolation")
+    if (GH_DEMO && !ghDemoReadOnly(m)) throw ghDemoRefuse((m && m.type) || "?");
     return realWS(m);
   };
+  // REST calls (hass.callApi and friends): reads only in demo mode
+  const rest = (name, methodOf) => (typeof h[name] === "function" ? { [name]: (...a) => {
+    if (GH_DEMO && !ghDemoMethodOk(methodOf(a))) return Promise.reject(ghDemoRefuse(`${name} ${methodOf(a)} ${a[name === "fetchWithAuth" ? 0 : 1]}`));
+    return h[name](...a);
+  } } : {});
   const conn = h.connection && new Proxy(h.connection, {
     get(t, k) {
       if (k === "sendMessagePromise") return demoWS;
@@ -1248,6 +1334,7 @@ function ghHass(h) {
           if (f && f[m.forecast_type]) setTimeout(() => cb({ type: m.forecast_type, forecast: f[m.forecast_type] }), 0);
           return Promise.resolve(() => { GH_VSUBS.delete(sub); });
         }
+        if (GH_DEMO && !ghDemoReadOnly(m)) return Promise.reject(ghDemoRefuse((m && m.type) || "?"));
         return t.subscribeMessage(cb, m, opts);
       };
       const v = Reflect.get(t, k, t);
@@ -1264,6 +1351,8 @@ function ghHass(h) {
       return h.callService(domain, service, data, target).catch((e) => { ghReportFailure(domain, service, data, target, e); throw e; });
     },
     callWS: demoWS,
+    ...rest("callApi", (a) => a[0]), ...rest("callApiRaw", (a) => a[0]),
+    ...rest("fetchWithAuth", (a) => (a[1] && a[1].method) || (a[0] && a[0].method) || "GET"),
   };
   GH_WRAPPED.set(h, { ver: GH_DEMO_VER, hass });
   return hass;
@@ -1313,6 +1402,7 @@ function ghWrapCards() {
   }
 }
 
+// @@DEMO-GUARD-END
 
 // ================================================================== built-in weather provider
 // weather: { provider: open_meteo, place: { name, latitude, longitude } } in the settings gives the
@@ -1429,7 +1519,12 @@ const ghFeature = (name) => {
   const f = { ...GH_FEATURES, ...(GH_CFG.features || {}) };
   return name in f ? !!f[name] : true;
 };
-const GH_TZ = (GH_CFG.household && GH_CFG.household.timezone) || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+// a time zone name the browser does not know (a typing mistake in the settings) falls back to the device's zone
+const GH_TZ = (() => {
+  const want = GH_CFG.household && GH_CFG.household.timezone, here = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  if (!want) return here;
+  try { new Intl.DateTimeFormat("en", { timeZone: String(want) }); return String(want); } catch (e) { console.warn("Glass Home: unknown household.timezone, using this device's time zone"); return here; }
+})();
 const GH_LOCALE = (GH_CFG.household && GH_CFG.household.locale) || navigator.language || "en-GB";
 // The clock follows household.timezone (else the device's zone) and household.clock (24 or 12)
 const GH_CLOCK12 = String((GH_CFG.household || {}).clock) === "12";
@@ -3061,6 +3156,9 @@ class GlassHomeLightCard extends HTMLElement {
     }
     if (s.state === "unavailable") return;
     const domain = c.entity.split(".")[0];
+    // one tap only switches things that are safe to switch; a lock, alarm, door, gate or anything else
+    // opens Home Assistant's own controls, which ask for a code or confirmation where the device needs one
+    if (!["light", "switch", "fan", "input_boolean"].includes(domain)) { fireMoreInfo(this, c.entity); return; }
     this._hass.callService(domain === "light" ? "light" : "homeassistant", "toggle", { entity_id: c.entity });
   }
 
@@ -4537,7 +4635,7 @@ const NARROW_CSS_HERO = `
  * strip or the temperature). It lives on document.body, outside the card, so the card's rounded clipping
  * never cuts it off. Close: X, tap outside, Esc, or drag the handle down on a phone.
  *
- * Everything comes from the weather entity (met.no here) through the hero card's own forecast
+ * Everything comes from the weather entity (met.no, Open-Meteo or another) through the hero card's own forecast
  * subscriptions (daily and hourly), so opening the sheet makes no extra forecast requests. The one extra
  * read is the entity's own recent history, once per opening, for the pressure trend.
  *
@@ -4548,7 +4646,7 @@ const NARROW_CSS_HERO = `
  * home); and what the data source does and does not provide.
  *
  * Values marked "calc." are worked out here from the forecast (feels like, dew point for later hours,
- * frost risk, pressure trend, daylight, solar noon, best time outside). met.no gives no gusts, chance of
+ * frost risk, pressure trend, daylight, solar noon, best time outside). Some services (met.no, for one) give no gusts, chance of
  * rain, visibility, air quality or official warnings, so none of those are shown.
  */
 const WX_COMPASS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
@@ -5220,7 +5318,7 @@ class GlassHomeWeatherSheet extends HTMLElement {
     const name = M.a.friendly_name ? wxEsc(M.a.friendly_name) : "";
     const mini = M.avail && M.cur.temp != null ? `<div class="mini" aria-hidden="true"><ha-icon icon="${this._icon(M.cur.cond, M.isNight(M.now))}"></ha-icon>${Math.round(M.cur.temp)}°</div>` : "";
     return `<div class="hdr"><div class="grab" aria-hidden="true"></div><div class="ttl"><h2 id="wxttl">Weather${name ? ` · ${name}` : ""}</h2>
-      <div class="sub${M.stale ? " stale" : ""}">${when} · met.no forecast</div></div>${mini}
+      <div class="sub${M.stale ? " stale" : ""}">${when} · ${/^Demo weather/.test(M.a.attribution || "") ? "demo data, not a real forecast" : M.a.glasshome_provider === "open_meteo" ? "Open-Meteo forecast" : "forecast from Home Assistant"}</div></div>${mini}
       <button class="x" data-act="close" aria-label="Close the weather"><ha-icon icon="mdi:close"></ha-icon></button></div>`;
   }
 
@@ -10419,6 +10517,8 @@ class GlassHomeSetupBase extends HTMLElement {
       case "kind": this._ui.kind = this._ui.kind === ds.kind ? "" : ds.kind; this._render(); return;
       case "nav": this._leaveTo(ds.path); return;
       case "retry": {
+        // demo mode never reloads a real integration (the connection and fetch guards refuse it as well)
+        if (GH_DEMO) { ghToast("Demo mode: Glass Home doesn't ask Home Assistant to reload anything. Set up your own home to do this.", "warn"); return; }
         try { await this._hass.callApi("POST", `config/config_entries/entry/${encodeURIComponent(ds.entry)}/reload`); ghToast("Asked Home Assistant to try again"); }
         catch (e) { ghToast(`Home Assistant couldn't reload it: ${(e && (e.message || (e.body && e.body.message))) || "error"}`, "warn"); }
         setTimeout(() => this._loadIntegrations(), 2500);
@@ -10656,6 +10756,7 @@ class GlassHomeSetupBase extends HTMLElement {
   _ctx() { return { states: this._hass.states, entities: (this._reg && this._reg.entities) || {}, services: this._hass.services || {}, now: new Date().toISOString() }; }
   _buildCfg() { return ghsBuildConfig(this._d, GH_LOADED.cfg && !GH_LOADED.cfg.demo ? GH_LOADED.cfg : {}, this._ctx()); }
   async _writeConfig(cfg) {
+    if (GH_DEMO) throw ghDemoSaveError();
     const url_path = GH_LOADED.path === "lovelace" ? null : GH_LOADED.path;
     let dash;
     try { dash = await this._ws({ type: "lovelace/config", url_path, force: true }); }
@@ -10937,7 +11038,10 @@ class GlassHomeSetupBase extends HTMLElement {
     const preview = W.source !== "open_meteo" || !W.place ? "" : !pv ? "" : pv.loading ? `<div class="row"><div class="spin"></div><span class="muted">Getting the forecast…</span></div>`
       : pv.error ? `<div class="note warn">${esc(pv.error)}</div>` : (() => {
         const a = pv.attributes, t = pv.daily[0] || {};
-        const hm = (x) => (x ? new Date(x).toLocaleTimeString(this._d.household.locale || undefined, { hour: "numeric", minute: "2-digit", hour12: this._d.household.clock === "12" }) : "–");
+        // sunrise and sunset in the chosen place's own time (not this browser's), else the home's time zone
+        const tz = W.place.timezone || this._d.household.timezone || GH_TZ;
+        const hm = (x) => { if (!x) return "–"; const o = { hour: "numeric", minute: "2-digit", hour12: this._d.household.clock === "12" };
+          try { return new Date(x).toLocaleTimeString(this._d.household.locale || undefined, { ...o, timeZone: tz }); } catch (e) { return new Date(x).toLocaleTimeString(undefined, o); } };
         return `<div class="glass panel" style="padding:18px"><div class="wx"><ha-icon icon="${WEATHER_ICON_OF(pv.state)}" style="--mdc-icon-size:46px"></ha-icon>
           <div class="tmp">${Math.round(a.temperature)}${esc(a.temperature_unit)}</div><div><b>${esc(GHS_CONDITION[pv.state] || pv.state)}</b><div class="muted">Feels like ${Math.round(a.apparent_temperature)}° · ${esc(W.place.label || W.place.name)}</div></div></div>
           <div class="wxd" style="margin-top:12px"><div>Today<b>${Math.round(t.temperature)}° / ${Math.round(t.templow)}°</b></div><div>Rain chance<b>${t.precipitation_probability != null ? `${t.precipitation_probability}%` : "–"}</b></div>
@@ -11984,7 +12088,16 @@ async function ghShrinkImage(file) {
 
 // Save the dashboard's glasshome: settings after changing them (administrators, UI dashboards), then
 // read them back to make sure Home Assistant kept them
+// demo mode saves nothing to Home Assistant; the settings can still be copied as YAML
+function ghDemoSaveError() {
+  const err = new Error(ghExploring ? "You're exploring the demo, so nothing is saved. Choose Exit demo, then set up your own home."
+    : "Demo mode is on for this dashboard (demo: true), so nothing is saved to Home Assistant. Copy the settings below, or remove demo: true from the dashboard's configuration first.");
+  err.yaml = true;
+  err.demo = true;
+  return err;
+}
 async function ghSaveSettings(hass, change) {
+  if (GH_DEMO) throw ghDemoSaveError();
   const url_path = GH_LOADED.path === "lovelace" ? null : GH_LOADED.path;
   const dash = await hass.callWS({ type: "lovelace/config", url_path, force: true });
   if (!dash || !Array.isArray(dash.views) || !dash.views.length) throw new Error("the dashboard came back without its views, so nothing was changed");

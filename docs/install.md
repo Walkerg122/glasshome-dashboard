@@ -1,5 +1,19 @@
 # Install
 
+> **Glass Home 2.0 is a public beta.** It has been tested with automated tests and in the bundled browser
+> preview, but **not yet on a clean, separate Home Assistant installation**. Make a backup first
+> (Settings → System → Backups). Glass Home adds its own files and dashboard and changes nothing else, and
+> [Uninstalling](#uninstalling) removes it. If a step here doesn't match what you see, please open an
+> **Installation problem** issue.
+
+## Before you start
+
+- **Home Assistant 2024.11 or newer** (Glass Home uses sections views and `grid_options`).
+- An **administrator** account (to add resources and the dashboard, and for the wizard to save).
+- A way to copy files into `/config`: the **File editor**, **Samba share** or **Studio Code Server** add-on.
+- **HACS**, only to install **card-mod** (required) and kiosk-mode (optional). Glass Home itself is **not** a
+  HACS repository yet: you copy its files by hand, as below.
+
 These steps take about 15 minutes. You need access to your Home Assistant `/config` folder, for example
 through the **File editor** or **Samba share** add-on, or **Studio Code Server**.
 
@@ -97,7 +111,12 @@ the wizard, start with a `config.yaml` that contains only `setup: { complete: fa
    (Ctrl+F5 on a computer, or pull to refresh in the companion app).
 
 With `demo: true` the Settings item shows **Check**: the dashboard shows a fictional home and nothing is sent
-to your devices. Remove `demo: true` when your own settings are in.
+to your devices. **Demo mode never changes anything in Home Assistant, including saving settings**, so remove
+`demo: true` from the dashboard's raw configuration (or `config.yaml`) before running the setup wizard for your
+own home. **Explore the demo** on the welcome screen is different: it lasts only for that browser tab, and
+**Exit demo** ends it.
+
+If something doesn't work, see [troubleshooting.md](troubleshooting.md).
 
 ## Updating
 
@@ -112,3 +131,8 @@ views in your dashboard with the new [dashboards/glasshome.yaml](../dashboards/g
 Delete the Glass Home dashboard (or its `lovelace:` lines), the two resources and the Glass Home News
 integration, then delete `/config/www/glasshome/`, `/config/glasshome/`, `/config/custom_components/glasshome_news/`,
 `/config/themes/glasshome.yaml` and any `glasshome_*.yaml` packages, and restart.
+
+Glass Home also keeps a few small items in Home Assistant's own frontend storage: an unfinished setup, the
+homepage layout (`glasshome_homepage`), the floor plan (`glasshome_floorplan`) and the end time of a heating
+boost. They are harmless once the cards are gone. Home Assistant has no screen to delete them; a browser's
+local storage may also hold copies (`glasshome.*`), which clearing the site data removes.

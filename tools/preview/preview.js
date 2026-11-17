@@ -169,7 +169,10 @@ const listeners = new Set();
 const push = () => { hass = { ...hass, states: { ...states } }; listeners.forEach((f) => f(hass)); };
 const forecast = Array.from({ length: 6 }, (_, i) => ({ datetime: iso(now + i * 86400e3), condition: ["partlycloudy", "rainy", "sunny", "cloudy", "sunny", "rainy"][i],
   temperature: [15, 12, 16, 13, 17, 11][i], templow: [8, 7, 9, 6, 10, 6][i], precipitation_probability: [10, 70, 0, 20, 5, 60][i] }));
+// everything that reaches this stand-in "server" is logged, so a check can prove demo mode sent nothing
+const server = window.GlassHomePreviewServer = [];
 const callWS = async (m) => {
+  server.push({ via: "ws", type: m.type });
   if (m.type === "frontend/get_system_data") { try { return { value: JSON.parse(localStorage.getItem(`glasshome.preview.sd.${mode}.${m.key}`) || "null") }; } catch (e) { return { value: null }; } }
   if (m.type === "frontend/set_system_data") { localStorage.setItem(`glasshome.preview.sd.${mode}.${m.key}`, JSON.stringify(m.value)); return {}; }
   if (m.type === "frontend/get_user_data") { try { return { value: JSON.parse(localStorage.getItem(`glasshome.preview.ud.${m.key}`) || "null") }; } catch (e) { return { value: null }; } }
@@ -217,6 +220,7 @@ hass = {
   config: { time_zone: "Europe/London", version: "2026.11.0", unit_system: { temperature: "°C" } },
   entities: REG.entities, devices: REG.devices, areas: REG.areas,
   callService: async (domain, service, data = {}) => {
+    server.push({ via: "service", type: `${domain}.${service}` });
     const ids = [].concat(data.entity_id || []);
     for (const id of ids) {
       const s = states[id];
@@ -238,6 +242,7 @@ hass = {
     push();
   },
   callWS, callApi: async (method, path) => {
+    server.push({ via: "rest", type: `${method} ${path}` });
     if (/config_entries\/entry\/e5\/reload/.test(path)) throw new Error("Device did not answer");
     if (/^calendars\/calendar\.bin_collections/.test(path)) {
       // fortnightly alternating collections from the coming Tuesday, as a council calendar would list them

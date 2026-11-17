@@ -2,8 +2,9 @@
 
 ## Reporting a problem
 
-Please report security problems privately through GitHub's **Report a vulnerability** button (Security tab),
-not in a public issue. Include the file, what an attacker could do, and how to reproduce it. Never include
+Please report security problems privately through GitHub's **Report a vulnerability** button (Security tab
+→ Advisories), not in a public issue. If that button is missing, open an issue that says only "security
+contact requested", without details, and the maintainer will get in touch privately. Include the file, what an attacker could do, and how to reproduce it. Never include
 your own tokens, passwords or addresses in a report.
 
 ## What Glass Home does and does not store
@@ -38,6 +39,26 @@ your own tokens, passwords or addresses in a report.
 - **Export** files contain your settings (room names, entity ids, the weather place). Treat them like the
   settings themselves: never put them in `/config/www` or a public repository. Import accepts only JSON files
   made by Export, and shows what it found before anything changes.
+
+## Demo mode never changes your Home Assistant
+
+The demo (**Explore the demo**, or `demo: true`) must never send a state-changing request to the real Home
+Assistant, whatever is pressed. Glass Home does not rely on hiding buttons for this. While the demo is shown, only
+**read** requests leave the browser (states, configuration, registries, history and statistics, listed by name
+or by Home Assistant's `get`, `list`, `subscribe` and `info` naming). Everything else is answered in the
+browser and never sent, at three layers:
+
+1. the cards' own Home Assistant object (`callService`, `callWS`, `callApi`, `callApiRaw`, `fetchWithAuth`);
+2. the page's shared WebSocket connection (`sendMessagePromise`, `sendMessage`, `subscribeMessage`), which
+   also covers the setup wizard, Settings and Home Assistant's own cards on the Glass Home dashboard;
+3. the browser's `fetch` for Home Assistant's REST API (`/api/...`): only `GET` and `HEAD` are let
+   through. `/auth/token`, which keeps you signed in, is not affected.
+
+That covers device actions (lights, heating, locks, alarms, cameras, scripts, automations, notifications),
+integration reloads (**Retry** in Settings), saving settings, registry and entity changes, schedules and
+frontend storage. Layers 2 and 3 apply only while the Glass Home dashboard is open, so other dashboards are
+never affected. `tests/js/demo-isolation.test.mjs` runs this code against a mocked Home Assistant and checks
+that nothing state-changing reaches it.
 
 ## The News fetcher (SSRF protection)
 

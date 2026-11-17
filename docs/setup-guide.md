@@ -15,8 +15,9 @@ Glass Home sets itself up from inside the dashboard. You do not need to write an
 Open the dashboard. If it has no settings yet, the welcome screen opens:
 
 - **Get started** walks you through the setup. It takes about five minutes.
-- **Explore the demo** shows a complete fictional home. Nothing in the demo talks to your real devices. A small
-  bar at the top lets you **Set up my home** or **Exit demo** at any time.
+- **Explore the demo** shows a complete fictional home. Nothing in the demo talks to your real devices or changes
+  anything in Home Assistant, and nothing is saved while it is shown. A small bar at the top lets you
+  **Set up my home** or **Exit demo** at any time.
 
 ## The steps
 

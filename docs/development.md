@@ -55,6 +55,13 @@ They load the plain-function part of `www/glasshome/glasshome-cards.js` (between
 `// @@MODEL-END`) and test device discovery, rooms from areas, building and reading back settings, the checks
 before saving, the YAML export and the Open-Meteo parser. No dependencies.
 
+`tests/js/demo-isolation.test.mjs` runs the demo guard (between `// @@DEMO-GUARD-START` and
+`// @@DEMO-GUARD-END`) against a mocked Home Assistant connection, `hass` object and `fetch`. It sends every kind
+of state-changing request (device actions, scripts, automations, notifications, integration reloads, registry,
+dashboard and storage writes, REST calls) by every route and checks that none reaches the mock, that reads still
+work, and that nothing is blocked outside demo mode. The preview also logs every request its stand-in server
+receives in `window.GlassHomePreviewServer`, so the same can be checked by hand in the browser.
+
 ## Tests for the News integration
 
 ```bash

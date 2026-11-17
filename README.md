@@ -1,4 +1,10 @@
-# Glass Home
+# Glass Home 2.0 (Public Beta)
+
+> **Public beta: please read before installing.** Glass Home 2.0 has been tested with automated tests and in
+> its bundled browser preview (fictional data, a stand-in for the Home Assistant frontend, 26 screen sizes). It
+> has **not yet been verified on a clean, separate Home Assistant installation** or on physical phones and
+> tablets. Expect rough edges, keep a backup of your Home Assistant configuration, and please report problems
+> (see [Contributing](#contributing)). It installs next to your existing dashboards and changes nothing else.
 
 A glass-style, touch-first dashboard for [Home Assistant](https://www.home-assistant.io/). It has a swipeable
 homepage with a live-sky welcome panel, lighting, climate, energy, media, cameras, laundry, bin day and an
@@ -89,10 +95,12 @@ what each feature needs.
 
 ## Screen sizes
 
-The layout is tested at 360×800, 390×844, 412×915, 600×960, 768×1024, 1024×768, 1280×800, 1440×900 and
-1920×1080, in both portrait and landscape. On screens narrower than 600px the homepage **reflows at full size**:
-small tiles take half the width and the page scrolls. It does not shrink. Wall tablets that should show the
-whole page at once can set `layout: { fit: scale }` in the settings instead.
+The layout adapts by itself from small phones (320 px) to large monitors (2560 px), in portrait and landscape.
+It was checked in the preview at 26 sizes, on every view, every Settings tab and every wizard step (see
+[docs/development.md](docs/development.md)). On screens narrower than 600px the homepage **reflows at full
+size**: small tiles take half the width and the page scrolls. Large monitors get a wider layout. Wall tablets
+that should show the whole page at once can set `layout: { fit: scale }` in the settings instead. Real devices
+(notches, iOS Safari's address bar, touch) have not been tested yet.
 
 ## Try it without Home Assistant
 
@@ -100,7 +108,7 @@ whole page at once can set `layout: { fit: scale }` in the settings instead.
 node tools/preview/serve.mjs
 ```
 
-Then open <http://localhost:8123/glass-home/home>. The preview uses the built-in demo mode (a fictional
+Then open <http://localhost:8123/glass-home/home> (another port: `node tools/preview/serve.mjs 8130`). The preview uses the built-in demo mode (a fictional
 home). In Home Assistant, `glasshome: { demo: true }` or **Explore the demo** on the welcome screen shows the same
 demo. To try the setup wizard against a small fictional home, see [docs/development.md](docs/development.md).
 
@@ -116,6 +124,31 @@ demo. To try the setup wizard against a small fictional home, see [docs/developm
 - [How it works](docs/architecture.md)
 - [Development and preview](docs/development.md)
 - [Security](SECURITY.md)
+
+## Known limitations
+
+- **Not yet verified on a separate, clean Home Assistant** or on physical devices (see the note at the top).
+- **Manual install.** Glass Home is not a HACS repository yet: you copy its files (HACS is only used for
+  card-mod and the optional kiosk-mode).
+- **YAML-mode dashboards can't be saved from the browser.** The wizard and Settings then give you the settings
+  as YAML to paste into `config.yaml` (Home Assistant only lets the browser save UI-managed dashboards).
+- **Saving needs an administrator account.** Other users can use the dashboard but not change its settings.
+- **Demo mode never changes anything in Home Assistant**, including saving settings. Leave the demo (or remove
+  `demo: true`) before setting up your own home.
+- **Browsers:** container queries need Safari 16+ or Chrome 105+ (2022). Older browsers get a simpler layout.
+- Some features are built around particular integrations (Hive heating, SmartThings washers, Android TV Remote,
+  Spotify or Music Assistant). They are optional and off by default.
+
+## Contributing
+
+Bug reports, installation problems and pull requests are welcome. Please use the issue forms
+(**Bug report** or **Installation problem**), and remove anything personal first: entity ids are fine to share,
+but not addresses, names, IP or MAC addresses, tokens or screenshots of a real home. Before a pull request, run
+the checks in [docs/development.md](docs/development.md) (`node --test tests/js`, `python -m pytest` and
+`node tools/validate.mjs`).
+
+**Security problems:** please do not open a public issue. Report them privately as described in
+[SECURITY.md](SECURITY.md).
 
 ## Licence
 

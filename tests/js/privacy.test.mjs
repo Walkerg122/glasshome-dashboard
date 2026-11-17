@@ -27,7 +27,8 @@ test("demo mode stops every action that is not on a demo device", () => {
   assert.equal((bundle.match(/ghDemoBlocked\(/g) || []).length, 4, "the block is in all three places");
   assert.match(bundle, /if \(GH_DEMO\) \{ ghDemoBlocked\(domain, service\); return Promise\.resolve/);
   assert.match(bundle, /if \(GH_DEMO && m && \(m\.type === "call_service" \|\| m\.type === "execute_script"\)\)/);
-  assert.match(bundle, /m\.type === "execute_script"\) && ghDashPath\(\) === GH_LOADED\.path\)/);
+  // the shared connection only lets reads through on the Glass Home dashboard (demo-isolation.test.mjs runs it)
+  assert.match(bundle, /if \(ghDemoHere\(\)\) \{[\s\S]{0,400}const no = ghDemoGate\(m\);/);
 });
 
 test("a demo camera never asks the server for a picture", () => {

@@ -1,0 +1,69 @@
+name: Bug report
+description: Something in Glass Home doesn't work or looks wrong.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping. **Please remove anything personal** before posting: entity ids are fine, but not
+        your address, names, IP or MAC addresses, tokens, camera pictures or screenshots of a real home.
+        Security problems: please report them privately instead (see SECURITY.md).
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the Glass Home dashboard
+        2. Go to ...
+        3. Press ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Glass Home version
+      description: Settings → Advanced shows it, or the ?v= at the end of the resource URL.
+      placeholder: "2.0.0"
+    validations:
+      required: true
+  - type: input
+    id: ha
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.11.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Dashboard mode
+      options:
+        - Made in the UI (storage mode)
+        - YAML file
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: "e.g. Android tablet, Home Assistant app 2026.10 / Windows, Chrome 131"
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics (optional)
+      description: Settings → Advanced → Diagnostics. It contains no location or names, but read it before pasting.
+      render: json
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console errors (optional)
+      description: Lines starting with "Glass Home" or in red, from the browser's developer tools.
+      render: text

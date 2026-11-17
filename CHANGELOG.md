@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/) and
 versions follow [Semantic Versioning](https://semver.org/).
 
-## [2.0.0] - unreleased
+## [2.0.0] - unreleased (public beta)
 
 Brings the demo up to date with the primary dashboard it was built from, and adds a setup wizard so nobody has
 to write YAML.
@@ -70,6 +70,11 @@ to write YAML.
   same section after you save, and the chosen tab is scrolled into view.
 
 ### Fixed
+- The weather step of the setup wizard showed sunrise and sunset in the browser's time zone, not the chosen
+  place's (a place in another time zone could show a sunrise in the middle of the night).
+- The weather pop-up always said "met.no forecast". It now names the real source: the built-in Open-Meteo
+  forecast, a Home Assistant weather entity, or demo data, which is labelled "demo data, not a real forecast".
+- A mistyped `household.timezone` no longer breaks the clock; the device's time zone is used instead.
 - **Every screen size, automatically** (tested in the preview from 320×568 phones to 2560×1440 monitors, in portrait
   and landscape; not yet tested on physical devices or a separate Home Assistant installation):
   - Chart and floor plan labels stay readable on phones (they shrank to 4–8 px); room sizes on the floor plan hide
@@ -117,9 +122,24 @@ to write YAML.
 - "Reset the demo" only shows in demo mode.
 
 ### Security
+- **Demo mode can no longer change anything in Home Assistant.** In the earlier 2.0 preview, **Retry** in
+  Settings → Devices and integrations still asked Home Assistant to reload a real integration while the demo
+  was shown, and other non-action requests (saving settings or layouts, schedules, registry changes) were not
+  stopped either. Demo mode now lets only read requests through, at three layers (the cards' Home Assistant
+  object, the shared WebSocket connection and `fetch` for `/api/`), so the wizard, Settings and Home
+  Assistant's own cards on the dashboard are covered too. Retry and saving also refuse up front with a clear
+  message. See SECURITY.md, "Demo mode never changes your Home Assistant".
+- New regression tests (`tests/js/demo-isolation.test.mjs`, 57 tests) run that code against a mocked Home
+  Assistant: lights, heating and boost, cameras, locks, alarm arm/disarm, scripts, automations, notifications,
+  integration reloads, entity, device and area registry changes, dashboard saves, frontend storage, schedules,
+  voice commands and REST calls are each sent by every route and must not reach it. Reads must still work,
+  real (non-demo) use must be unaffected, and other dashboards must be untouched.
 - Demo mode now refuses every action that is not on a demo device: on the Glass Home dashboard nothing is
   sent to Home Assistant (a light, lock, script or notification on a real entity is stopped and said on
   screen). Other dashboards are not affected.
+- The light card's one-tap switch now only switches lights, switches, fans and input booleans. Anything else
+  (a lock, alarm, garage door or cover) opens Home Assistant's own controls, which ask for a code or
+  confirmation where the device needs one.
 - The Home / Away pill (and the person saved for it) only appears with Home or away switched on, so the
   dashboard never shows whether someone is in unless you chose that.
 - Example comments in the cards use neutral entity ids.
